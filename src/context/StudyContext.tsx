@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Course, Exam, Task, StudySession, Suggestion } from '../types/study';
-import { STORAGE_KEYS, INITIAL_COURSES, INITIAL_EXAMS, INITIAL_TASKS, INITIAL_SESSIONS, getRelativeDateStr } from '../constants/initialData';
+import { STORAGE_KEYS, INITIAL_COURSES, INITIAL_EXAMS, INITIAL_TASKS, INITIAL_SESSIONS } from '../constants/initialData';
 
 interface StudyContextType {
   courses: Course[];

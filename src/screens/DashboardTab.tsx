@@ -20,7 +20,7 @@ export default function DashboardTab({ setTab, setTimerCourse, setTimerTask }: a
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
         <View>
-          <Text style={styles.welcomeText}>Ciao Daniel! 👋</Text>
+          <Text style={styles.welcomeText}>Bentornato👋</Text>
           <Text style={styles.dateText}>Pronto per una sessione di studio?</Text>
         </View>
         <Ionicons name="school" size={32} color="#8B5CF6" />
