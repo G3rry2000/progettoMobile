@@ -1,5 +1,17 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal } from 'react-native';
+import { 
+  StyleSheet, 
+  View, 
+  Text, 
+  ScrollView, 
+  TouchableOpacity, 
+  TextInput, 
+  Modal,
+  KeyboardAvoidingView, 
+  Platform, 
+  TouchableWithoutFeedback, 
+  Keyboard 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 
@@ -68,7 +80,7 @@ export default function AgendaTab() {
         })}
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Pianificazione del Giorno</Text>
           {dayTasks.length === 0 && daySessions.length === 0 ? (
@@ -109,25 +121,36 @@ export default function AgendaTab() {
         </View>
       </ScrollView>
 
-      {/* CREATE MODAL */}
+      {/* CREATE MODAL CON STRUTTURA UNICA AGGIUSTATA PER TELEFONO */}
       <Modal visible={modal} transparent animationType="slide">
         <View style={styles.overlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Crea Task</Text>
-            <Text style={styles.label}>Titolo</Text>
-            <TextInput style={styles.input} value={tTitle} onChangeText={setTTitle} placeholder="Es. Ripasso slide..." placeholderTextColor="#64748B" />
-            <Text style={styles.label}>Associa Corso</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 6 }}>
-              <TouchableOpacity style={[styles.chip, cId === 'all' && styles.chipActive]} onPress={() => setCId('all')}><Text style={styles.chipText}>Generale</Text></TouchableOpacity>
-              {courses.map((c) => <TouchableOpacity key={c.id} style={[styles.chip, cId === c.id && styles.chipActive]} onPress={() => setCId(c.id)}><Text style={styles.chipText}>{c.name}</Text></TouchableOpacity>)}
-            </ScrollView>
-            <Text style={styles.label}>Tempo Stimato (min)</Text>
-            <TextInput style={styles.input} value={tEst} keyboardType="numeric" onChangeText={setTEst} />
-            <View style={[styles.row, { marginTop: 12 }]}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModal(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}><Text style={styles.saveBtnText}>Crea</Text></TouchableOpacity>
-            </View>
-          </View>
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+            style={{ width: '100%' }}
+          >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+              <View style={styles.modal}>
+                <Text style={styles.modalTitle}>Crea Task</Text>
+                
+                <Text style={styles.label}>Titolo</Text>
+                <TextInput style={styles.input} value={tTitle} onChangeText={setTTitle} placeholder="Es. Ripasso slide..." placeholderTextColor="#64748B" />
+                
+                <Text style={styles.label}>Associa Corso</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 6 }} keyboardShouldPersistTaps="handled">
+                  <TouchableOpacity style={[styles.chip, cId === 'all' && styles.chipActive]} onPress={() => setCId('all')}><Text style={styles.chipText}>Generale</Text></TouchableOpacity>
+                  {courses.map((c) => <TouchableOpacity key={c.id} style={[styles.chip, cId === c.id && styles.chipActive]} onPress={() => setCId(c.id)}><Text style={styles.chipText}>{c.name}</Text></TouchableOpacity>)}
+                </ScrollView>
+                
+                <Text style={styles.label}>Tempo Stimato (min)</Text>
+                <TextInput style={styles.input} value={tEst} keyboardType="numeric" onChangeText={setTEst} />
+                
+                <View style={[styles.row, { marginTop: 12 }]}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setModal(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}><Text style={styles.saveBtnText}>Crea</Text></TouchableOpacity>
+                </View>
+              </View>
+            </TouchableWithoutFeedback>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </View>
