@@ -1,4 +1,4 @@
-# Welcome to your Expo app 👋
+Link alla cartella drive con la documentazione richiesta:https://drive.google.com/drive/folders/1Mm6AR_gUpt1b4JWYNnJQnMthlHBknvR-?usp=sharing
 
 This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
