@@ -25,17 +25,50 @@ export default function ExamiTab() {
   const pastList = exams.filter((e) => e.status !== 'planned');
 
   const handleCreate = async () => {
-    if (!title.trim() || !courseId) return;
-    await addExam({ title: title.trim(), courseId, date, type: 'written', priority: 'medium', status: 'planned' });
-    setTitle(''); setModal(false);
+    if (!title.trim()) return;
+    const finalCourseId = courseId || courses[0]?.id;
+    if (!finalCourseId) {
+      Alert.alert("Errore", "Devi inserire almeno un corso nel tab 'Corsi' prima di pianificare una scadenza.");
+      return;
+    }
+    await addExam({ title: title.trim(), courseId: finalCourseId, date, type: 'written', priority: 'medium', status: 'planned' });
+    setTitle(''); setCourseId(''); setModal(false);
   };
 
   const handleSaveResult = async () => {
     if (!selectedEx) return;
+    let finalGrade: number | undefined = undefined;
+
+    if (eStatus === 'passed') {
+      const cleanInput = grade.trim().toLowerCase();
+      
+      if (cleanInput === '30l' || cleanInput === '30 lode' || cleanInput === '30 e lode') {
+        finalGrade = 31;
+      } else {
+        const votoNum = parseInt(cleanInput);
+        if (isNaN(votoNum) || votoNum < 18 || votoNum > 30) {
+          Alert.alert(
+            "Voto Errato ⚠️",
+            "Un esame superato deve avere un voto numerico tra 18 e 30. Scrivi '30L' per registrare la lode."
+          );
+          return;
+        }
+        finalGrade = votoNum;
+      }
+    }
+
     await updateExam(selectedEx.id, {
-      status: eStatus, grade: eStatus === 'passed' ? parseInt(grade) : undefined
+      status: eStatus,
+      grade: finalGrade
     });
+    
     setResultModal(false); setSelectedEx(null);
+  };
+
+  // Formattazione stringa lode per gli esami già sostenuti
+  const renderPastGrade = (g?: number) => {
+    if (!g) return '';
+    return g === 31 ? "30L" : g.toString();
   };
 
   return (
@@ -101,7 +134,7 @@ export default function ExamiTab() {
                 <View style={styles.rowSpace}>
                   <Text style={styles.courseCardName}>{ex.title}</Text>
                   <Text style={[styles.tagText, { color: ex.status === 'passed' ? '#10B981' : '#EF4444', fontWeight: 'bold' }]}>
-                    {ex.status === 'passed' ? `SUPERATO VOTO: ${ex.grade}` : 'NON SUPERATO'}
+                    {ex.status === 'passed' ? `SUPERATO VOTO: ${renderPastGrade(ex.grade)}` : 'NON SUPERATO'}
                   </Text>
                 </View>
                 <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
@@ -154,8 +187,8 @@ export default function ExamiTab() {
             </View>
             {eStatus === 'passed' && (
               <View>
-                <Text style={styles.label}>Voto Conseguito</Text>
-                <TextInput style={styles.input} value={grade} keyboardType="numeric" onChangeText={setGrade} />
+                <Text style={styles.label}>Voto Conseguito (Es. 27 o 30L)</Text>
+                <TextInput style={styles.input} value={grade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setGrade} />
               </View>
             )}
             <View style={[styles.row, { marginTop: 16 }]}>

@@ -22,6 +22,11 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress }) => {
     return '#10B981';
   };
 
+  // Formattazione per la stampa a schermo del 30 e lode
+  const renderGrade = (grade: number) => {
+    return grade === 31 ? "30L" : grade.toString();
+  };
+
   return (
     <TouchableOpacity style={styles.card} onPress={onPress}>
       <View style={styles.rowSpace}>
@@ -35,7 +40,9 @@ export const CourseCard: React.FC<CourseCardProps> = ({ course, onPress }) => {
           <Text style={[styles.tagText, { color: getStatusColor(course.status) }]}>{getStatusLabel(course.status)}</Text>
         </View>
         {course.obtainedGrade && (
-          <Text style={[styles.tagText, { color: '#10B981', fontWeight: 'bold' }]}>Voto: {course.obtainedGrade}</Text>
+          <Text style={[styles.tagText, { color: '#10B981', fontWeight: 'bold' }]}>
+            Voto: {renderGrade(course.obtainedGrade)}
+          </Text>
         )}
       </View>
     </TouchableOpacity>

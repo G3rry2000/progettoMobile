@@ -57,20 +57,54 @@ export default function CorsiTab() {
 
   const handleCreate = async () => {
     if (!name.trim()) return;
+
+    // NUOVO: Validazione stringente sul Voto Target (Expected Grade)
+    const targetNum = parseInt(expectedGrade.trim());
+    if (isNaN(targetNum) || targetNum < 18 || targetNum > 30) {
+      Alert.alert(
+        "Voto Target Non Valido ⚠️",
+        "Il voto target per il superamento dell'esame deve essere compreso tra 18 e 30."
+      );
+      return;
+    }
+
     await addCourse({
       name: name.trim(), professor: professor.trim() || 'Non specificato',
       semester: 'Semestre Standard', cfu: parseInt(cfu) || 6, description: desc.trim(),
-      status: cStatus, expectedGrade: parseInt(expectedGrade) || 30
+      status: cStatus, expectedGrade: targetNum
     });
-    setName(''); setProfessor(''); setCfu('6'); setDesc(''); setCStatus('in_prog');
+    
+    setName(''); setProfessor(''); setCfu('6'); setDesc(''); setCStatus('in_prog'); setExpectedGrade('30');
     setAddModal(false);
   };
 
   const handleSaveEdit = async (cId: string) => {
+    let finalGrade: number | undefined = undefined;
+
+    if (editGrade.trim()) {
+      const cleanInput = editGrade.trim().toLowerCase();
+      
+      if (cleanInput === '30l' || cleanInput === '30 lode' || cleanInput === '30 e lode') {
+        finalGrade = 31;
+      } else {
+        const votoNum = parseInt(cleanInput);
+        if (isNaN(votoNum) || votoNum < 18 || votoNum > 30) {
+          Alert.alert(
+            "Voto Conseguito Non Valido ⚠️",
+            "Il voto universitario inserito deve essere compreso tra 18 e 30. Per la lode scrivi '30L'."
+          );
+          return;
+        }
+        finalGrade = votoNum;
+      }
+    }
+
     await updateCourse(cId, {
       name: editName, professor: editProf, cfu: parseInt(editCfu) || 6,
-      obtainedGrade: editGrade ? parseInt(editGrade) : undefined
+      obtainedGrade: finalGrade,
+      status: finalGrade ? 'passed' : selectedCourse?.status
     });
+
     const updated = courses.find((c) => c.id === cId);
     if (updated) setSelectedCourse(updated);
     setEditMode(false);
@@ -116,7 +150,7 @@ export default function CorsiTab() {
                 setEditName(c.name);
                 setEditProf(c.professor);
                 setEditCfu(c.cfu.toString());
-                setEditGrade(c.obtainedGrade?.toString() || '');
+                setEditGrade(c.obtainedGrade ? (c.obtainedGrade === 31 ? '30L' : c.obtainedGrade.toString()) : '');
               }} 
             />
           ))
@@ -142,7 +176,7 @@ export default function CorsiTab() {
                   <TextInput style={styles.input} value={cfu} keyboardType="numeric" onChangeText={setCfu} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Voto Target</Text>
+                  <Text style={styles.label}>Voto Target (18-30)</Text>
                   <TextInput style={styles.input} value={expectedGrade} keyboardType="numeric" onChangeText={setExpectedGrade} />
                 </View>
               </View>
@@ -176,8 +210,8 @@ export default function CorsiTab() {
                     <TextInput style={styles.input} value={editProf} onChangeText={setEditProf} />
                     <Text style={styles.label}>CFU</Text>
                     <TextInput style={styles.input} value={editCfu} keyboardType="numeric" onChangeText={setEditCfu} />
-                    <Text style={styles.label}>Voto Ottenuto</Text>
-                    <TextInput style={styles.input} value={editGrade} keyboardType="numeric" placeholder="18-30" placeholderTextColor="#64748B" onChangeText={setEditGrade} />
+                    <Text style={styles.label}>Voto Ottenuto (Es. 28 o 30L)</Text>
+                    <TextInput style={styles.input} value={editGrade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setEditGrade} />
                     <View style={styles.row}>
                       <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditMode(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
                       <TouchableOpacity style={styles.saveBtn} onPress={() => handleSaveEdit(selectedCourse.id)}><Text style={styles.saveBtnText}>Salva</Text></TouchableOpacity>
