@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { Exam } from '../types/study';
@@ -26,11 +26,24 @@ export default function ExamiTab() {
 
   const handleCreate = async () => {
     if (!title.trim()) return;
+
+    // 1. CONTROLLO BLOCCO DATE PASSATE
+    const oggiStr = new Date().toISOString().split('T')[0];
+    if (date < oggiStr) {
+      Alert.alert(
+        "Data Non Valida ⚠️",
+        "Non puoi pianificare un esame in una data passata. Se lo hai già sostenuto, inseriscilo con la data odierna o futura e poi registrane l'esito."
+      );
+      return;
+    }
+
+    // 2. CONTROLLO CORSO ASSOCIATO
     const finalCourseId = courseId || courses[0]?.id;
     if (!finalCourseId) {
       Alert.alert("Errore", "Devi inserire almeno un corso nel tab 'Corsi' prima di pianificare una scadenza.");
       return;
     }
+
     await addExam({ title: title.trim(), courseId: finalCourseId, date, type: 'written', priority: 'medium', status: 'planned' });
     setTitle(''); setCourseId(''); setModal(false);
   };
@@ -65,7 +78,6 @@ export default function ExamiTab() {
     setResultModal(false); setSelectedEx(null);
   };
 
-  // Formattazione stringa lode per gli esami già sostenuti
   const renderPastGrade = (g?: number) => {
     if (!g) return '';
     return g === 31 ? "30L" : g.toString();
@@ -145,58 +157,62 @@ export default function ExamiTab() {
         )}
       </ScrollView>
 
-      {/* PLAN MODAL */}
+      {/* PLAN MODAL CON GESTIONE TASTIERA */}
       <Modal visible={modal} transparent animationType="slide">
-        <View style={styles.overlay}>
-          <View style={styles.modal}>
-            <View style={styles.rowSpace}>
-              <Text style={styles.modalTitle}>Pianifica Esame 📅</Text>
-              <TouchableOpacity onPress={() => setModal(false)}><Ionicons name="close" size={24} color="#FFF" /></TouchableOpacity>
-            </View>
-            <ScrollView style={{ marginVertical: 12 }}>
-              <Text style={styles.label}>Titolo Scadenza *</Text>
-              <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Es. Appello Scritto" placeholderTextColor="#64748B" />
-              <Text style={styles.label}>Corso Associato</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, marginVertical: 6 }}>
-                {courses.map((c) => (
-                  <TouchableOpacity key={c.id} style={[styles.chip, courseId === c.id && styles.chipActive]} onPress={() => setCourseId(c.id)}>
-                    <Text style={[styles.chipText, courseId === c.id && styles.chipTextActive]}>{c.name}</Text>
-                  </TouchableOpacity>
-                ))}
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <View style={styles.modal}>
+              <View style={styles.rowSpace}>
+                <Text style={styles.modalTitle}>Pianifica Esame 📅</Text>
+                <TouchableOpacity onPress={() => setModal(false)}><Ionicons name="close" size={24} color="#FFF" /></TouchableOpacity>
+              </View>
+              <ScrollView style={{ marginVertical: 12 }} keyboardShouldPersistTaps="handled">
+                <Text style={styles.label}>Titolo Scadenza *</Text>
+                <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Es. Appello Scritto" placeholderTextColor="#64748B" />
+                <Text style={styles.label}>Corso Associato</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 4 }}>
+                  {courses.map((c) => (
+                    <TouchableOpacity key={c.id} style={[styles.chip, courseId === c.id && styles.chipActive]} onPress={() => setCourseId(c.id)}>
+                      <Text style={[styles.chipText, courseId === c.id && styles.chipTextActive]}>{c.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <Text style={styles.label}>Data (AAAA-MM-GG)</Text>
+                <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="AAAA-MM-GG" placeholderTextColor="#64748B" />
               </ScrollView>
-              <Text style={styles.label}>Data (AAAA-MM-GG)</Text>
-              <TextInput style={styles.input} value={date} onChangeText={setDate} />
-            </ScrollView>
-            <View style={styles.row}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setModal(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}><Text style={styles.saveBtnText}>Crea</Text></TouchableOpacity>
+              <View style={[styles.row, { marginTop: 12 }]}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setModal(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}><Text style={styles.saveBtnText}>Crea</Text></TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </Modal>
 
-      {/* LOG ESITO MODAL */}
+      {/* LOG ESITO MODAL CON GESTIONE TASTIERA */}
       <Modal visible={resultModal} transparent animationType="slide">
-        <View style={styles.overlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Registra Esito</Text>
-            <Text style={styles.label}>Esito</Text>
-            <View style={[styles.row, { marginVertical: 8 }]}>
-              <TouchableOpacity style={[styles.chip, eStatus === 'passed' && styles.chipActive]} onPress={() => setEStatus('passed')}><Text style={styles.chipText}>Superato</Text></TouchableOpacity>
-              <TouchableOpacity style={[styles.chip, eStatus === 'failed' && styles.chipActive]} onPress={() => setEStatus('failed')}><Text style={styles.chipText}>Respinto</Text></TouchableOpacity>
-            </View>
-            {eStatus === 'passed' && (
-              <View>
-                <Text style={styles.label}>Voto Conseguito (Es. 27 o 30L)</Text>
-                <TextInput style={styles.input} value={grade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setGrade} />
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <View style={styles.modal}>
+              <Text style={styles.modalTitle}>Registra Esito</Text>
+              <Text style={styles.label}>Esito</Text>
+              <View style={[styles.row, { marginVertical: 8 }]}>
+                <TouchableOpacity style={[styles.chip, eStatus === 'passed' && styles.chipActive]} onPress={() => setEStatus('passed')}><Text style={styles.chipText}>Superato</Text></TouchableOpacity>
+                <TouchableOpacity style={[styles.chip, eStatus === 'failed' && styles.chipActive]} onPress={() => setEStatus('failed')}><Text style={styles.chipText}>Respinto</Text></TouchableOpacity>
               </View>
-            )}
-            <View style={[styles.row, { marginTop: 16 }]}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => { setResultModal(false); setSelectedEx(null); }}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveResult}><Text style={styles.saveBtnText}>Registra</Text></TouchableOpacity>
+              {eStatus === 'passed' && (
+                <View>
+                  <Text style={styles.label}>Voto Conseguito (Es. 27 o 30L)</Text>
+                  <TextInput style={styles.input} value={grade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setGrade} />
+                </View>
+              )}
+              <View style={[styles.row, { marginTop: 16 }]}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => { setResultModal(false); setSelectedEx(null); }}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.saveBtn} onPress={handleSaveResult}><Text style={styles.saveBtnText}>Registra</Text></TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </Modal>
     </View>
   );
@@ -225,7 +241,7 @@ const styles = StyleSheet.create({
   tagText: { fontSize: 9, fontWeight: 'bold' },
   cardSub: { fontSize: 11, color: '#64748B', marginBottom: 8 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modal: { backgroundColor: '#0F172A', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  modal: { backgroundColor: '#0F172A', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', paddingBottom: Platform.OS === 'ios' ? 30 : 20 },
   modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFF' },
   label: { fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', marginTop: 10, marginBottom: 6, fontWeight: 'bold' },
   input: { backgroundColor: 'rgba(30, 41, 59, 0.6)', borderRadius: 10, height: 40, paddingHorizontal: 12, color: '#FFF', fontSize: 13, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
