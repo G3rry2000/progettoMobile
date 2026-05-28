@@ -18,7 +18,6 @@ export const UpcomingExamRow: React.FC<UpcomingExamRowProps> = ({ exam, courseNa
       <Text style={styles.examTitle}>{exam.title}</Text>
       <Text style={styles.examCourse}>{courseName}</Text>
     </View>
-    <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.3)" />
   </View>
 );
 
