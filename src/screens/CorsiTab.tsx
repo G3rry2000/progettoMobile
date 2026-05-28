@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { Course } from '../types/study';
@@ -58,7 +58,6 @@ export default function CorsiTab() {
   const handleCreate = async () => {
     if (!name.trim()) return;
 
-    // NUOVO: Validazione stringente sul Voto Target (Expected Grade)
     const targetNum = parseInt(expectedGrade.trim());
     if (isNaN(targetNum) || targetNum < 18 || targetNum > 30) {
       Alert.alert(
@@ -157,127 +156,131 @@ export default function CorsiTab() {
         )}
       </ScrollView>
 
-      {/* CREA CORSO MODAL */}
+      {/* CREA CORSO MODAL - PROTETTO DALLA TASTIERA */}
       <Modal visible={addModal} animationType="slide" transparent>
-        <View style={styles.overlay}>
-          <View style={styles.modal}>
-            <View style={styles.rowSpace}>
-              <Text style={styles.modalTitle}>Crea Corso 📘</Text>
-              <TouchableOpacity onPress={() => setAddModal(false)}><Ionicons name="close" size={24} color="#94A3B8" /></TouchableOpacity>
-            </View>
-            <ScrollView style={{ marginVertical: 12 }}>
-              <Text style={styles.label}>Nome Corso *</Text>
-              <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Es. Sviluppo Mobile" placeholderTextColor="#64748B" />
-              <Text style={styles.label}>Docente</Text>
-              <TextInput style={styles.input} value={professor} onChangeText={setProfessor} placeholder="Es. Prof. Rossi" placeholderTextColor="#64748B" />
-              <View style={styles.row}>
-                <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={styles.label}>CFU</Text>
-                  <TextInput style={styles.input} value={cfu} keyboardType="numeric" onChangeText={setCfu} />
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Voto Target (18-30)</Text>
-                  <TextInput style={styles.input} value={expectedGrade} keyboardType="numeric" onChangeText={setExpectedGrade} />
-                </View>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+            <View style={styles.modal}>
+              <View style={styles.rowSpace}>
+                <Text style={styles.modalTitle}>Crea Corso 📘</Text>
+                <TouchableOpacity onPress={() => setAddModal(false)}><Ionicons name="close" size={24} color="#94A3B8" /></TouchableOpacity>
               </View>
-              <Text style={styles.label}>Note / Descrizione</Text>
-              <TextInput style={[styles.input, { height: 60 }]} value={desc} onChangeText={setDesc} multiline placeholder="Note sul corso..." placeholderTextColor="#64748B" />
-            </ScrollView>
-            <View style={styles.row}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setAddModal(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}><Text style={styles.saveBtnText}>Crea</Text></TouchableOpacity>
+              <ScrollView style={{ marginVertical: 12 }} keyboardShouldPersistTaps="handled">
+                <Text style={styles.label}>Nome Corso *</Text>
+                <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Es. Sviluppo Mobile" placeholderTextColor="#64748B" />
+                <Text style={styles.label}>Docente</Text>
+                <TextInput style={styles.input} value={professor} onChangeText={setProfessor} placeholder="Es. Prof. Rossi" placeholderTextColor="#64748B" />
+                <View style={styles.row}>
+                  <View style={{ flex: 1, marginRight: 8 }}>
+                    <Text style={styles.label}>CFU</Text>
+                    <TextInput style={styles.input} value={cfu} keyboardType="numeric" onChangeText={setCfu} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.label}>Voto Target (18-30)</Text>
+                    <TextInput style={styles.input} value={expectedGrade} keyboardType="numeric" onChangeText={setExpectedGrade} />
+                  </View>
+                </View>
+                <Text style={styles.label}>Note / Descrizione</Text>
+                <TextInput style={[styles.input, { height: 60 }]} value={desc} onChangeText={setDesc} multiline placeholder="Note sul corso..." placeholderTextColor="#64748B" />
+              </ScrollView>
+              <View style={styles.row}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setAddModal(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
+                <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}><Text style={styles.saveBtnText}>Crea</Text></TouchableOpacity>
+              </View>
             </View>
-          </View>
-        </View>
+          </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
       </Modal>
 
-      {/* DETTAGLI CORSO MODAL */}
+      {/* DETTAGLI CORSO MODAL - PROTETTO DALLA TASTIERA */}
       {selectedCourse && (
         <Modal visible={!!selectedCourse} animationType="slide" transparent>
-          <View style={styles.overlay}>
-            <View style={[styles.modal, { maxHeight: '90%' }]}>
-              <View style={styles.rowSpace}>
-                <Text style={styles.modalTitle} numberOfLines={1}>{editMode ? 'Modifica Corso' : selectedCourse.name}</Text>
-                <TouchableOpacity onPress={() => { setSelectedCourse(null); setEditMode(false); }}><Ionicons name="close" size={24} color="#94A3B8" /></TouchableOpacity>
-              </View>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+              <View style={[styles.modal, { maxHeight: '90%' }]}>
+                <View style={styles.rowSpace}>
+                  <Text style={styles.modalTitle} numberOfLines={1}>{editMode ? 'Modifica Corso' : selectedCourse.name}</Text>
+                  <TouchableOpacity onPress={() => { setSelectedCourse(null); setEditMode(false); }}><Ionicons name="close" size={24} color="#94A3B8" /></TouchableOpacity>
+                </View>
 
-              <ScrollView style={{ marginVertical: 12 }} showsVerticalScrollIndicator={false}>
-                {editMode ? (
-                  <View style={{ gap: 8 }}>
-                    <Text style={styles.label}>Nome Corso</Text>
-                    <TextInput style={styles.input} value={editName} onChangeText={setEditName} />
-                    <Text style={styles.label}>Docente</Text>
-                    <TextInput style={styles.input} value={editProf} onChangeText={setEditProf} />
-                    <Text style={styles.label}>CFU</Text>
-                    <TextInput style={styles.input} value={editCfu} keyboardType="numeric" onChangeText={setEditCfu} />
-                    <Text style={styles.label}>Voto Ottenuto (Es. 28 o 30L)</Text>
-                    <TextInput style={styles.input} value={editGrade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setEditGrade} />
-                    <View style={styles.row}>
-                      <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditMode(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
-                      <TouchableOpacity style={styles.saveBtn} onPress={() => handleSaveEdit(selectedCourse.id)}><Text style={styles.saveBtnText}>Salva</Text></TouchableOpacity>
-                    </View>
-                  </View>
-                ) : (
-                  <View style={{ gap: 12 }}>
-                    <View style={styles.rowSpace}>
-                      <Text style={styles.dateText}>Docente: {selectedCourse.professor}</Text>
-                      <Text style={styles.courseCfuText}>{selectedCourse.cfu} CFU</Text>
-                    </View>
-                    <View style={[styles.tagBadge, { backgroundColor: 'rgba(255,255,255,0.03)', alignSelf: 'flex-start' }]}>
-                      <Text style={[styles.tagText, { color: getStatusColor(selectedCourse.status) }]}>{getStatusLabel(selectedCourse.status).toUpperCase()}</Text>
-                    </View>
-
-                    {selectedCourse.description ? (
-                      <View style={styles.receipt}>
-                        <Text style={[styles.label, { marginTop: 0 }]}>Note Corso:</Text>
-                        <Text style={styles.cardDesc}>{selectedCourse.description}</Text>
-                      </View>
-                    ) : null}
-
-                    <View style={styles.row}>
-                      <View style={styles.statCard}>
-                        <Text style={styles.statVal}>{sessions.filter((s)=>s.courseId===selectedCourse.id).reduce((sum,s)=>sum+s.duration, 0)}m</Text>
-                        <Text style={styles.statSub}>Studio Totale</Text>
-                      </View>
-                      <View style={styles.statCard}>
-                        <Text style={styles.statVal}>{tasks.filter((t)=>t.courseId===selectedCourse.id && t.completed).length}/{tasks.filter((t)=>t.courseId===selectedCourse.id).length}</Text>
-                        <Text style={styles.statSub}>Task Completati</Text>
+                <ScrollView style={{ marginVertical: 12 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                  {editMode ? (
+                    <View style={{ gap: 8 }}>
+                      <Text style={styles.label}>Nome Corso</Text>
+                      <TextInput style={styles.input} value={editName} onChangeText={setEditName} />
+                      <Text style={styles.label}>Docente</Text>
+                      <TextInput style={styles.input} value={editProf} onChangeText={setEditProf} />
+                      <Text style={styles.label}>CFU</Text>
+                      <TextInput style={styles.input} value={editCfu} keyboardType="numeric" onChangeText={setEditCfu} />
+                      <Text style={styles.label}>Voto Ottenuto (Es. 28 o 30L)</Text>
+                      <TextInput style={styles.input} value={editGrade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setEditGrade} />
+                      <View style={[styles.row, { marginTop: 12 }]}>
+                        <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditMode(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
+                        <TouchableOpacity style={styles.saveBtn} onPress={() => handleSaveEdit(selectedCourse.id)}><Text style={styles.saveBtnText}>Salva</Text></TouchableOpacity>
                       </View>
                     </View>
-
-                    <View style={[styles.receipt, { gap: 4 }]}>
+                  ) : (
+                    <View style={{ gap: 12 }}>
                       <View style={styles.rowSpace}>
-                        <Text style={styles.cardTitle}>Task Associati</Text>
-                        <TouchableOpacity onPress={() => setAddTaskModal(true)}><Text style={{ fontSize: 11, color: '#A78BFA', fontWeight: 'bold' }}>+ Aggiungi</Text></TouchableOpacity>
+                        <Text style={styles.dateText}>Docente: {selectedCourse.professor}</Text>
+                        <Text style={styles.courseCfuText}>{selectedCourse.cfu} CFU</Text>
                       </View>
-                      {tasks.filter((t)=>t.courseId===selectedCourse.id).length === 0 ? (
-                        <Text style={styles.emptyText}>Nessun task per questo corso.</Text>
-                      ) : (
-                        tasks.filter((t)=>t.courseId===selectedCourse.id).map((task) => (
-                          <View key={task.id} style={styles.taskRow}>
-                            <TouchableOpacity onPress={() => toggleTaskCompleted(task.id)}>
-                              <Ionicons name={task.completed ? "checkbox" : "square-outline"} size={18} color={task.completed ? "#10B981" : "#FFF"} />
-                            </TouchableOpacity>
-                            <Text style={[styles.taskText, task.completed && styles.lineThrough, { flex: 1, marginLeft: 8 }]}>{task.title}</Text>
-                          </View>
-                        ))
-                      )}
-                    </View>
+                      <View style={[styles.tagBadge, { backgroundColor: 'rgba(255,255,255,0.03)', alignSelf: 'flex-start' }]}>
+                        <Text style={[styles.tagText, { color: getStatusColor(selectedCourse.status) }]}>{getStatusLabel(selectedCourse.status).toUpperCase()}</Text>
+                      </View>
 
-                    <View style={[styles.row, { marginTop: 12 }]}>
-                      <TouchableOpacity style={[styles.cancelBtn, { borderColor: '#8B5CF6' }]} onPress={() => setEditMode(true)}><Text style={[styles.cancelBtnText, { color: '#8B5CF6' }]}>Modifica</Text></TouchableOpacity>
-                      <TouchableOpacity style={[styles.cancelBtn, { borderColor: '#EF4444' }]} onPress={() => {
-                        Alert.alert("Elimina", "Eliminare il corso e le attività associate?", [
-                          { text: "No" },
-                          { text: "Sì", style: "destructive", onPress: async () => { await deleteCourse(selectedCourse.id); setSelectedCourse(null); } }
-                        ]);
-                      }}><Text style={[styles.cancelBtnText, { color: '#EF4444' }]}>Elimina</Text></TouchableOpacity>
+                      {selectedCourse.description ? (
+                        <View style={styles.receipt}>
+                          <Text style={[styles.label, { marginTop: 0 }]}>Note Corso:</Text>
+                          <Text style={styles.cardDesc}>{selectedCourse.description}</Text>
+                        </View>
+                      ) : null}
+
+                      <View style={styles.row}>
+                        <View style={styles.statCard}>
+                          <Text style={styles.statVal}>{sessions.filter((s)=>s.courseId===selectedCourse.id).reduce((sum,s)=>sum+s.duration, 0)}m</Text>
+                          <Text style={styles.statSub}>Studio Totale</Text>
+                        </View>
+                        <View style={styles.statCard}>
+                          <Text style={styles.statVal}>{tasks.filter((t)=>t.courseId===selectedCourse.id && t.completed).length}/{tasks.filter((t)=>t.courseId===selectedCourse.id).length}</Text>
+                          <Text style={styles.statSub}>Task Completati</Text>
+                        </View>
+                      </View>
+
+                      <View style={[styles.receipt, { gap: 4 }]}>
+                        <View style={styles.rowSpace}>
+                          <Text style={styles.cardTitle}>Task Associati</Text>
+                          <TouchableOpacity onPress={() => setAddTaskModal(true)}><Text style={{ fontSize: 11, color: '#A78BFA', fontWeight: 'bold' }}>+ Aggiungi</Text></TouchableOpacity>
+                        </View>
+                        {tasks.filter((t)=>t.courseId===selectedCourse.id).length === 0 ? (
+                          <Text style={styles.emptyText}>Nessun task per questo corso.</Text>
+                        ) : (
+                          tasks.filter((t)=>t.courseId===selectedCourse.id).map((task) => (
+                            <View key={task.id} style={styles.taskRow}>
+                              <TouchableOpacity onPress={() => toggleTaskCompleted(task.id)}>
+                                <Ionicons name={task.completed ? "checkbox" : "square-outline"} size={18} color={task.completed ? "#10B981" : "#FFF"} />
+                              </TouchableOpacity>
+                              <Text style={[styles.taskText, task.completed && styles.lineThrough, { flex: 1, marginLeft: 8 }]}>{task.title}</Text>
+                            </View>
+                          ))
+                        )}
+                      </View>
+
+                      <View style={[styles.row, { marginTop: 12 }]}>
+                        <TouchableOpacity style={[styles.cancelBtn, { borderColor: '#8B5CF6' }]} onPress={() => setEditMode(true)}><Text style={[styles.cancelBtnText, { color: '#8B5CF6' }]}>Modifica</Text></TouchableOpacity>
+                        <TouchableOpacity style={[styles.cancelBtn, { borderColor: '#EF4444' }]} onPress={() => {
+                          Alert.alert("Elimina", "Eliminare il corso e le attività associate?", [
+                            { text: "No" },
+                            { text: "Sì", style: "destructive", onPress: async () => { await deleteCourse(selectedCourse.id); setSelectedCourse(null); } }
+                          ]);
+                        }}><Text style={[styles.cancelBtnText, { color: '#EF4444' }]}>Elimina</Text></TouchableOpacity>
+                      </View>
                     </View>
-                  </View>
-                )}
-              </ScrollView>
-            </View>
-          </View>
+                  )}
+                </ScrollView>
+              </View>
+            </KeyboardAvoidingView>
+          </TouchableWithoutFeedback>
         </Modal>
       )}
 
@@ -323,7 +326,7 @@ const styles = StyleSheet.create({
   chipTextActive: { color: '#A78BFA' },
   emptyText: { fontSize: 12, color: '#64748B', textAlign: 'center', paddingVertical: 12 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modal: { backgroundColor: '#0F172A', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  modal: { backgroundColor: '#0F172A', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', paddingBottom: Platform.OS === 'ios' ? 35 : 20 },
   modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#FFF' },
   label: { fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', marginTop: 10, marginBottom: 6, fontWeight: 'bold' },
   input: { backgroundColor: 'rgba(30, 41, 59, 0.6)', borderRadius: 10, height: 40, paddingHorizontal: 12, color: '#FFF', fontSize: 13, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
