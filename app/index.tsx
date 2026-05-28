@@ -7,9 +7,10 @@ import CorsiTab from '../src/screens/CorsiTab';
 import ExamiTab from '../src/screens/EsamiTab';
 import AgendaTab from '../src/screens/AgendaTab';
 import TimerTab from '../src/screens/TimerTab';
+import StatsTab from '../src/screens/StatsTab';
 
 function MainApp() {
-  const [tab, setTab] = useState<'dashboard' | 'courses' | 'exams' | 'planner' | 'timer'>('dashboard');
+  const [tab, setTab] = useState<'dashboard' | 'courses' | 'exams' | 'planner' | 'timer' | 'stats'>('dashboard');
 
   // Stato condiviso tra l'Assistente Intelligente e il Timer Pomodoro
   const [timerCourse, setTimerCourse] = useState('');
@@ -25,6 +26,8 @@ function MainApp() {
         return <ExamiTab />;
       case 'planner':
         return <AgendaTab />;
+      case 'stats':
+        return <StatsTab />;
       case 'timer':
         return <TimerTab timerCourse={timerCourse} setTimerCourse={setTimerCourse} timerTask={timerTask} setTimerTask={setTimerTask} />;
       default:
@@ -63,6 +66,11 @@ function MainApp() {
           <TouchableOpacity style={styles.tabBtn} onPress={() => setTab('timer')}>
             <Ionicons name="time" size={20} color={tab === 'timer' ? '#A78BFA' : '#64748B'} />
             <Text style={[styles.tabBtnText, tab === 'timer' && styles.tabBtnTextActive]}>Timer</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.tabBtn} onPress={() => setTab('stats')}>
+            <Ionicons name="pie-chart" size={20} color={tab === 'stats' ? '#A78BFA' : '#64748B'} />
+            <Text style={[styles.tabBtnText, tab === 'stats' && styles.tabBtnTextActive]}>Stats</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
