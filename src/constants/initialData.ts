@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   EXAMS: 'snack_exams',
   TASKS: 'snack_tasks',
   SESSIONS: 'snack_sessions',
+  CANCELLED_BY_DELETE: 'snack_cancelled_by_delete',
 };
 
 export const getRelativeDateStr = (daysOffset: number): string => {

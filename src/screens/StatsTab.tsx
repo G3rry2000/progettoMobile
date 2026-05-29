@@ -24,7 +24,7 @@ export default function StatsTab() {
   { label: 'Passati', value: exams.filter((e) => e.status === 'passed').length, color: '#06B6D4' },
   { label: 'Programmati', value: exams.filter((e) => e.status === 'planned').length, color: '#8B5CF6' },
   { label: 'Falliti', value: exams.filter((e) => e.status === 'failed').length, color: '#EF4444' },
-  { label: 'Annullati', value: exams.filter((e) => e.status === 'cancelled').length, color: '#64748B' },
+  { label: 'Annullati', value: exams.filter((e) => e.status === 'cancelled').length + (stats.deletedCancelledExams || 0), color: '#64748B' },
 ];
 
   return (
@@ -37,6 +37,8 @@ export default function StatsTab() {
       <View style={styles.grid}>
         <StatCard label="Totale CFU" value={totalCfu} sub="CFU totali" />
         <StatCard label="Media Ponderata" value={avgGrade > 0 ? avgGrade.toFixed(2) : '- -'} sub="Media pesata" />
+        <StatCard label="Esami Falliti" value={exams.filter((e) => e.status === 'failed').length} sub="Esami" />
+        <StatCard label="Esami Annullati" value={exams.filter((e) => e.status === 'cancelled').length + (stats.deletedCancelledExams || 0)} sub="Esami" />
       </View>
 
       <View style={styles.card}>
@@ -71,7 +73,7 @@ export default function StatsTab() {
               <View key={p.label} style={styles.pieRow}>
                 <View style={[styles.legendDot, { backgroundColor: p.color }]} />
                 <Text style={styles.legendLabel}>{p.label}</Text>
-                <Text style={styles.legendCount}>{p.count}</Text>
+                <Text style={styles.legendCount}>{p.value}</Text>
               </View>
             ))}
           </View>

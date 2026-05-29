@@ -29,6 +29,7 @@ interface StudyContextType {
     completedTasksCount: number;
     pendingTasksCount: number;
     weeklyStudyMinutes: { [day: string]: number };
+    deletedCancelledExams: number;
   };
   smartSuggestion: Suggestion | null;
 }
@@ -41,10 +42,13 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const [tasks, setTasks] = useState<Task[]>([]);
   const [sessions, setSessions] = useState<StudySession[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletedCancelledExams, setDeletedCancelledExams] = useState<number>(0);
 
   useEffect(() => {
     const initData = async () => {
       try {
+        const deletedStr = await AsyncStorage.getItem(STORAGE_KEYS.CANCELLED_BY_DELETE);
+        setDeletedCancelledExams(deletedStr ? parseInt(deletedStr, 10) : 0);
         const coursesJson = await AsyncStorage.getItem(STORAGE_KEYS.COURSES);
         if (!coursesJson) {
           await AsyncStorage.setItem(STORAGE_KEYS.COURSES, JSON.stringify(INITIAL_COURSES));
@@ -110,8 +114,14 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const deleteExam = async (id: string) => {
+    const exam = exams.find((e) => e.id === id);
     const updated = exams.filter((e) => e.id !== id); setExams(updated);
     await AsyncStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(updated));
+    if (exam && exam.status !== 'cancelled') {
+      const next = deletedCancelledExams + 1;
+      setDeletedCancelledExams(next);
+      await AsyncStorage.setItem(STORAGE_KEYS.CANCELLED_BY_DELETE, String(next));
+    }
   };
 
   const addTask = async (tData: Omit<Task, 'id' | 'completed' | 'actualTime'>) => {
@@ -207,7 +217,8 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const stats = {
     totalCFU, passedCFU, weightedAverage: getWeightedAverage(),
     totalStudyHours, completedTasksCount, pendingTasksCount,
-    weeklyStudyMinutes: getWeeklyStudyMinutes()
+    weeklyStudyMinutes: getWeeklyStudyMinutes(),
+    deletedCancelledExams
   };
 
   const smartSuggestion = loading ? null : getSmartSuggestion();
