@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { StatCard } from '../components/StatCard';
@@ -46,17 +46,23 @@ export default function StatsTab() {
         {courseData.length === 0 ? (
           <Text style={styles.empty}>Nessun corso presente.</Text>
         ) : (
-          courseData.map((cd) => (
-            <View key={cd.id} style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Text style={styles.courseName}>{cd.name}</Text>
-                <Text style={styles.coursePct}>{cd.progress}%</Text>
+          <FlatList
+            data={courseData}
+            keyExtractor={(item) => item.id}
+            scrollEnabled={false}
+            renderItem={({ item: cd }) => (
+              <View style={styles.row}>
+                <View style={styles.rowLeft}>
+                  <Text style={styles.courseName}>{cd.name}</Text>
+                  <Text style={styles.coursePct}>{cd.progress}%</Text>
+                </View>
+                <View style={styles.barBg}>
+                  <View style={[styles.barFill, { width: `${Math.max(cd.progress, 3)}%`, backgroundColor: cd.color }]} />
+                </View>
               </View>
-              <View style={styles.barBg}>
-                <View style={[styles.barFill, { width: `${Math.max(cd.progress, 3)}%`, backgroundColor: cd.color }]} />
-              </View>
-            </View>
-          ))
+            )}
+            contentContainerStyle={{ gap: 6 }}
+          />
         )}
       </View>
 
@@ -68,15 +74,19 @@ export default function StatsTab() {
 
         <View style={[styles.card, { flex: 1 }] }>
           <Text style={styles.cardTitle}>Legenda</Text>
-          <View style={styles.pieList}>
-            {pie.map((p) => (
-              <View key={p.label} style={styles.pieRow}>
+          <FlatList
+            data={pie}
+            keyExtractor={(item) => item.label}
+            scrollEnabled={false}
+            contentContainerStyle={styles.pieList}
+            renderItem={({ item: p }) => (
+              <View style={styles.pieRow}>
                 <View style={[styles.legendDot, { backgroundColor: p.color }]} />
                 <Text style={styles.legendLabel}>{p.label}</Text>
                 <Text style={styles.legendCount}>{p.value}</Text>
               </View>
-            ))}
-          </View>
+            )}
+          />
         </View>
       </View>
     </ScrollView>

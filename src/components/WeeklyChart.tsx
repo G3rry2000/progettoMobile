@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, FlatList } from 'react-native';
 
 interface WeeklyChartProps {
   weeklyData: { [day: string]: number };
@@ -12,12 +12,16 @@ export const WeeklyChart: React.FC<WeeklyChartProps> = ({ weeklyData }) => {
     <View style={styles.card}>
       <Text style={styles.cardTitle}>Attività di Studio Settimanale</Text>
       <Text style={styles.cardSub}>Minuti accumulati negli ultimi 7 giorni</Text>
-      <View style={styles.chart}>
-        {Object.keys(weeklyData).map((day) => {
+      <FlatList
+        horizontal
+        data={Object.keys(weeklyData)}
+        keyExtractor={(item) => item}
+        contentContainerStyle={styles.chart}
+        renderItem={({ item: day }) => {
           const m = weeklyData[day];
           const h = Math.min((m / maxMins) * 100, 100);
           return (
-            <View key={day} style={styles.chartCol}>
+            <View style={styles.chartCol}>
               <View style={styles.barWrapper}>
                 {m > 0 && <Text style={styles.barVal}>{m}m</Text>}
                 <View style={[styles.bar, { height: `${Math.max(h, 5)}%`, backgroundColor: m > 0 ? '#8B5CF6' : 'rgba(255,255,255,0.05)' }]} />
@@ -25,8 +29,8 @@ export const WeeklyChart: React.FC<WeeklyChartProps> = ({ weeklyData }) => {
               <Text style={styles.chartLbl}>{day}</Text>
             </View>
           );
-        })}
-      </View>
+        }}
+      />
     </View>
   );
 };

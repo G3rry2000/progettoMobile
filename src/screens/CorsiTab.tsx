@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { Course } from '../types/study';
@@ -125,36 +125,44 @@ export default function CorsiTab() {
       </View>
 
       <View style={{ height: 36, marginBottom: 12 }}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}>
-          {(['all', 'in_prog', 'passed', 'to_start'] as const).map((f) => (
-            <TouchableOpacity key={f} style={[styles.chip, filter === f && styles.chipActive]} onPress={() => setFilter(f)}>
+        <FlatList
+          horizontal
+          data={['all', 'in_prog', 'passed', 'to_start']}
+          keyExtractor={(item) => String(item)}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
+          renderItem={({ item: f }) => (
+            <TouchableOpacity style={[styles.chip, filter === f && styles.chipActive]} onPress={() => setFilter(f)}>
               <Text style={[styles.chipText, filter === f && styles.chipTextActive]}>
                 {f === 'all' ? 'Tutti' : f === 'in_prog' ? 'In Corso' : f === 'passed' ? 'Superati' : 'Da Iniziare'}
               </Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          )}
+        />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {filtered.length === 0 ? (
-          <Text style={styles.emptyText}>Nessun corso inserito.</Text>
-        ) : (
-          filtered.map((c) => (
-            <CourseCard 
-              key={c.id} 
-              course={c} 
+      {filtered.length === 0 ? (
+        <Text style={styles.emptyText}>Nessun corso inserito.</Text>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item: c }) => (
+            <CourseCard
+              course={c}
               onPress={() => {
                 setSelectedCourse(c);
                 setEditName(c.name);
                 setEditProf(c.professor);
                 setEditCfu(c.cfu.toString());
                 setEditGrade(c.obtainedGrade ? (c.obtainedGrade === 31 ? '30L' : c.obtainedGrade.toString()) : '');
-              }} 
+              }}
             />
-          ))
-        )}
-      </ScrollView>
+          )}
+          contentContainerStyle={styles.scroll}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       {/* CREA CORSO MODAL - PROTETTO DALLA TASTIERA */}
       <Modal visible={addModal} animationType="slide" transparent>
@@ -255,14 +263,18 @@ export default function CorsiTab() {
                         {tasks.filter((t)=>t.courseId===selectedCourse.id).length === 0 ? (
                           <Text style={styles.emptyText}>Nessun task per questo corso.</Text>
                         ) : (
-                          tasks.filter((t)=>t.courseId===selectedCourse.id).map((task) => (
-                            <View key={task.id} style={styles.taskRow}>
-                              <TouchableOpacity onPress={() => toggleTaskCompleted(task.id)}>
-                                <Ionicons name={task.completed ? "checkbox" : "square-outline"} size={18} color={task.completed ? "#10B981" : "#FFF"} />
-                              </TouchableOpacity>
-                              <Text style={[styles.taskText, task.completed && styles.lineThrough, { flex: 1, marginLeft: 8 }]}>{task.title}</Text>
-                            </View>
-                          ))
+                          <FlatList
+                            data={tasks.filter((t)=>t.courseId===selectedCourse.id)}
+                            keyExtractor={(item) => item.id}
+                            renderItem={({ item: task }) => (
+                              <View style={styles.taskRow}>
+                                <TouchableOpacity onPress={() => toggleTaskCompleted(task.id)}>
+                                  <Ionicons name={task.completed ? "checkbox" : "square-outline"} size={18} color={task.completed ? "#10B981" : "#FFF"} />
+                                </TouchableOpacity>
+                                <Text style={[styles.taskText, task.completed && styles.lineThrough, { flex: 1, marginLeft: 8 }]}>{task.title}</Text>
+                              </View>
+                            )}
+                          />
                         )}
                       </View>
 

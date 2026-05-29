@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { Exam } from '../types/study';
@@ -111,48 +111,58 @@ export default function ExamiTab() {
           upcomingList.length === 0 ? (
             <Text style={styles.emptyText}>Nessun esame pianificato.</Text>
           ) : (
-            upcomingList.map((ex) => (
-              <View key={ex.id} style={styles.card}>
-                <View style={styles.rowSpace}>
-                  <Text style={styles.courseCardName}>{ex.title}</Text>
-                  <Text style={{ fontSize: 11, color: '#A78BFA', fontWeight: 'bold' }}>{ex.date}</Text>
-                </View>
-                <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
-                <View style={[styles.rowSpace, { marginTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.03)', paddingTop: 8 }]}>
-                  <Text style={{ fontSize: 11, color: '#64748B' }}>Tipo: {ex.type.toUpperCase()}</Text>
-                  <View style={styles.rowAlign}>
-                    <TouchableOpacity style={styles.completeBtn} onPress={() => { setSelectedEx(ex); setResultModal(true); }}>
-                      <Text style={styles.completeBtnText}>Esito</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={{ marginLeft: 12 }} onPress={() => {
-                      Alert.alert("Elimina", "Rimuovere questo esame?", [
-                        { text: "Annulla" },
-                        { text: "Sì", style: "destructive", onPress: async () => await deleteExam(ex.id) }
-                      ]);
-                    }}>
-                      <Ionicons name="trash" size={16} color="#EF4444" />
-                    </TouchableOpacity>
+            <FlatList
+              data={upcomingList}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ gap: 12 }}
+              renderItem={({ item: ex }) => (
+                <View style={styles.card}>
+                  <View style={styles.rowSpace}>
+                    <Text style={styles.courseCardName}>{ex.title}</Text>
+                    <Text style={{ fontSize: 11, color: '#A78BFA', fontWeight: 'bold' }}>{ex.date}</Text>
+                  </View>
+                  <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
+                  <View style={[styles.rowSpace, { marginTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.03)', paddingTop: 8 }]}>
+                    <Text style={{ fontSize: 11, color: '#64748B' }}>Tipo: {ex.type.toUpperCase()}</Text>
+                    <View style={styles.rowAlign}>
+                      <TouchableOpacity style={styles.completeBtn} onPress={() => { setSelectedEx(ex); setResultModal(true); }}>
+                        <Text style={styles.completeBtnText}>Esito</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={{ marginLeft: 12 }} onPress={() => {
+                        Alert.alert("Elimina", "Rimuovere questo esame?", [
+                          { text: "Annulla" },
+                          { text: "Sì", style: "destructive", onPress: async () => await deleteExam(ex.id) }
+                        ]);
+                      }}>
+                        <Ionicons name="trash" size={16} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
-              </View>
-            ))
+              )}
+            />
           )
         ) : (
           pastList.length === 0 ? (
             <Text style={styles.emptyText}>Nessun esame sostenuto ancora registrato.</Text>
           ) : (
-            pastList.map((ex) => (
-              <View key={ex.id} style={styles.card}>
-                <View style={styles.rowSpace}>
-                  <Text style={styles.courseCardName}>{ex.title}</Text>
-                  <Text style={[styles.tagText, { color: ex.status === 'passed' ? '#10B981' : '#EF4444', fontWeight: 'bold' }]}>
-                    {ex.status === 'passed' ? `SUPERATO VOTO: ${renderPastGrade(ex.grade)}` : 'NON SUPERATO'}
-                  </Text>
+            <FlatList
+              data={pastList}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ gap: 12 }}
+              renderItem={({ item: ex }) => (
+                <View style={styles.card}>
+                  <View style={styles.rowSpace}>
+                    <Text style={styles.courseCardName}>{ex.title}</Text>
+                    <Text style={[styles.tagText, { color: ex.status === 'passed' ? '#10B981' : '#EF4444', fontWeight: 'bold' }]}>
+                      {ex.status === 'passed' ? `SUPERATO VOTO: ${renderPastGrade(ex.grade)}` : 'NON SUPERATO'}
+                    </Text>
+                  </View>
+                  <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
+                  <Text style={styles.cardSub}>Data sostenimento: {ex.date}</Text>
                 </View>
-                <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
-                <Text style={styles.cardSub}>Data sostenimento: {ex.date}</Text>
-              </View>
-            ))
+              )}
+            />
           )
         )}
       </ScrollView>
@@ -170,13 +180,18 @@ export default function ExamiTab() {
                 <Text style={styles.label}>Titolo Scadenza *</Text>
                 <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Es. Appello Scritto" placeholderTextColor="#64748B" />
                 <Text style={styles.label}>Corso Associato</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 4 }}>
-                  {courses.map((c) => (
-                    <TouchableOpacity key={c.id} style={[styles.chip, courseId === c.id && styles.chipActive]} onPress={() => setCourseId(c.id)}>
+                <FlatList
+                  horizontal
+                  data={courses}
+                  keyExtractor={(item) => item.id}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
+                  renderItem={({ item: c }) => (
+                    <TouchableOpacity style={[styles.chip, courseId === c.id && styles.chipActive]} onPress={() => setCourseId(c.id)}>
                       <Text style={[styles.chipText, courseId === c.id && styles.chipTextActive]}>{c.name}</Text>
                     </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                  )}
+                />
                 <Text style={styles.label}>Data (AAAA-MM-GG)</Text>
                 <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="AAAA-MM-GG" placeholderTextColor="#64748B" />
               </ScrollView>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Modal, Alert, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 
@@ -134,27 +134,40 @@ export default function TimerTab({ timerCourse, setTimerCourse, timerTask, setTi
         <Text style={styles.cardSub}>Associa lo studio ad un corso per accumulare ore di progresso ed ore nei task.</Text>
 
         <Text style={[styles.label, { marginTop: 12 }]}>Seleziona Corso</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 4 }}>
-          {courses.map((c) => (
-            <TouchableOpacity key={c.id} style={[styles.chip, timerCourse === c.id && styles.chipActive]} onPress={() => { setTimerCourse(c.id); setTimerTask(''); }}>
+        <FlatList
+          horizontal
+          data={courses}
+          keyExtractor={(item) => item.id}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
+          renderItem={({ item: c }) => (
+            <TouchableOpacity style={[styles.chip, timerCourse === c.id && styles.chipActive]} onPress={() => { setTimerCourse(c.id); setTimerTask(''); }}>
               <Text style={[styles.chipText, timerCourse === c.id && styles.chipTextActive]}>{c.name}</Text>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          )}
+        />
 
         {timerCourse && tasks.filter((t) => !t.completed && t.courseId === timerCourse).length > 0 ? (
           <View>
             <Text style={styles.label}>Seleziona Task attivo</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 4 }}>
-              <TouchableOpacity style={[styles.chip, timerTask === '' && styles.chipActive]} onPress={() => setTimerTask('')}>
-                <Text style={styles.chipText}>Nessuno / Solo Corso</Text>
-              </TouchableOpacity>
-              {tasks.filter((t) => !t.completed && t.courseId === timerCourse).map((t) => (
-                <TouchableOpacity key={t.id} style={[styles.chip, timerTask === t.id && styles.chipActive]} onPress={() => setTimerTask(t.id)}>
-                  <Text style={[styles.chipText, timerTask === t.id && styles.chipTextActive]}>{t.title}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            <FlatList
+              horizontal
+              data={[{ id: '__none', title: 'Nessuno / Solo Corso' }, ...tasks.filter((t) => !t.completed && t.courseId === timerCourse)]}
+              keyExtractor={(item) => item.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
+              renderItem={({ item }) => (
+                item.id === '__none' ? (
+                  <TouchableOpacity style={[styles.chip, timerTask === '' && styles.chipActive]} onPress={() => setTimerTask('')}>
+                    <Text style={styles.chipText}>Nessuno / Solo Corso</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity style={[styles.chip, timerTask === item.id && styles.chipActive]} onPress={() => setTimerTask(item.id)}>
+                    <Text style={[styles.chipText, timerTask === item.id && styles.chipTextActive]}>{item.title}</Text>
+                  </TouchableOpacity>
+                )
+              )}
+            />
           </View>
         ) : null}
       </View>

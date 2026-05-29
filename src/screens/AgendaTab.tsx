@@ -10,7 +10,8 @@ import {
   KeyboardAvoidingView, 
   Platform, 
   TouchableWithoutFeedback, 
-  Keyboard 
+  Keyboard,
+  FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
@@ -69,15 +70,21 @@ export default function AgendaTab() {
       </View>
 
       <View style={styles.stripContainer}>
-        {weekDays.map((w) => {
-          const act = w.dateStr === selectedDate;
-          return (
-            <TouchableOpacity key={w.dateStr} style={[styles.dayChip, act && styles.dayChipActive, w.isToday && !act && { borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }]} onPress={() => setSelectedDate(w.dateStr)}>
-              <Text style={[styles.dayChipLabel, act && { color: '#A78BFA' }]}>{w.label}</Text>
-              <Text style={[styles.dayChipNum, act && { color: '#FFF' }]}>{w.dayNum}</Text>
-            </TouchableOpacity>
-          );
-        })}
+        <FlatList
+          horizontal
+          data={weekDays}
+          keyExtractor={(item) => item.dateStr}
+          showsHorizontalScrollIndicator={false}
+          renderItem={({ item: w }) => {
+            const act = w.dateStr === selectedDate;
+            return (
+              <TouchableOpacity style={[styles.dayChip, act && styles.dayChipActive, w.isToday && !act && { borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }]} onPress={() => setSelectedDate(w.dateStr)}>
+                <Text style={[styles.dayChipLabel, act && { color: '#A78BFA' }]}>{w.label}</Text>
+                <Text style={[styles.dayChipNum, act && { color: '#FFF' }]}>{w.dayNum}</Text>
+              </TouchableOpacity>
+            );
+          }}
+        />
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -87,36 +94,59 @@ export default function AgendaTab() {
             <Text style={styles.emptyText}>Nessuna attività programmata.</Text>
           ) : (
             <View style={{ gap: 6 }}>
-              {dayTasks.map((t) => <Text key={t.id} style={styles.cardDesc}>[TASK] {t.completed ? '✅' : '⏳'} {t.title} ({t.estimatedTime}m stima)</Text>)}
-              {daySessions.map((s) => <Text key={s.id} style={[styles.cardDesc, { color: '#A78BFA' }]}>[STUDIO] ⏱️ {s.activityType.toUpperCase()} - {s.duration} min svolti</Text>)}
+                  <FlatList
+                    data={dayTasks}
+                    keyExtractor={(item) => item.id}
+                    scrollEnabled={false}
+                    renderItem={({ item: t }) => <Text style={styles.cardDesc}>[TASK] {t.completed ? '✅' : '⏳'} {t.title} ({t.estimatedTime}m stima)</Text>}
+                    contentContainerStyle={{ gap: 6 }}
+                  />
+                  <FlatList
+                    data={daySessions}
+                    keyExtractor={(item) => item.id}
+                    scrollEnabled={false}
+                    renderItem={({ item: s }) => <Text style={[styles.cardDesc, { color: '#A78BFA' }]}>[STUDIO] ⏱️ {s.activityType.toUpperCase()} - {s.duration} min svolti</Text>}
+                    contentContainerStyle={{ gap: 6 }}
+                  />
             </View>
           )}
         </View>
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Checklist di Studio</Text>
-          <View style={[styles.row, { marginBottom: 12, marginTop: 8 }]}>
-            {(['pending', 'completed', 'all'] as const).map((t) => (
-              <TouchableOpacity key={t} style={[styles.chip, tFilter === t && styles.chipActive]} onPress={() => setTFilter(t)}>
-                <Text style={styles.chipText}>{t === 'pending' ? 'Attivi' : t === 'completed' ? 'Finiti' : 'Tutti'}</Text>
-              </TouchableOpacity>
-            ))}
+          <View style={[styles.row, { marginBottom: 12, marginTop: 8 }]}> 
+            <FlatList
+              horizontal
+              data={['pending', 'completed', 'all']}
+              keyExtractor={(item) => String(item)}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ gap: 8 }}
+              renderItem={({ item: t }) => (
+                <TouchableOpacity style={[styles.chip, tFilter === t && styles.chipActive]} onPress={() => setTFilter(t as any)}>
+                  <Text style={styles.chipText}>{t === 'pending' ? 'Attivi' : t === 'completed' ? 'Finiti' : 'Tutti'}</Text>
+                </TouchableOpacity>
+              )}
+            />
           </View>
           {checklistTasks.length === 0 ? (
             <Text style={styles.emptyText}>Nessun task attivo.</Text>
           ) : (
-            checklistTasks.map((t) => (
-              <View key={t.id} style={styles.taskItem}>
-                <TouchableOpacity onPress={() => toggleTaskCompleted(t.id)}>
-                  <Ionicons name={t.completed ? "checkbox" : "square-outline"} size={22} color={t.completed ? "#10B981" : "rgba(255,255,255,0.3)"} />
-                </TouchableOpacity>
-                <View style={{ flex: 1, marginLeft: 8 }}>
-                  <Text style={[styles.taskText, t.completed && styles.lineThrough]}>{t.title}</Text>
-                  <Text style={{ fontSize: 10, color: '#64748B' }}>Corso: {getCourseName(t.courseId)} {t.dueDate ? `• Scadenza: ${t.dueDate}` : ''}</Text>
+            <FlatList
+              data={checklistTasks}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item: t }) => (
+                <View style={styles.taskItem}>
+                  <TouchableOpacity onPress={() => toggleTaskCompleted(t.id)}>
+                    <Ionicons name={t.completed ? "checkbox" : "square-outline"} size={22} color={t.completed ? "#10B981" : "rgba(255,255,255,0.3)"} />
+                  </TouchableOpacity>
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Text style={[styles.taskText, t.completed && styles.lineThrough]}>{t.title}</Text>
+                    <Text style={{ fontSize: 10, color: '#64748B' }}>Corso: {getCourseName(t.courseId)} {t.dueDate ? `• Scadenza: ${t.dueDate}` : ''}</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => deleteTask(t.id)}><Ionicons name="trash" size={16} color="#EF4444" /></TouchableOpacity>
                 </View>
-                <TouchableOpacity onPress={() => deleteTask(t.id)}><Ionicons name="trash" size={16} color="#EF4444" /></TouchableOpacity>
-              </View>
-            ))
+              )}
+            />
           )}
         </View>
       </ScrollView>
@@ -136,10 +166,19 @@ export default function AgendaTab() {
                 <TextInput style={styles.input} value={tTitle} onChangeText={setTTitle} placeholder="Es. Ripasso slide..." placeholderTextColor="#64748B" />
                 
                 <Text style={styles.label}>Associa Corso</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 6 }} keyboardShouldPersistTaps="handled">
-                  <TouchableOpacity style={[styles.chip, cId === 'all' && styles.chipActive]} onPress={() => setCId('all')}><Text style={styles.chipText}>Generale</Text></TouchableOpacity>
-                  {courses.map((c) => <TouchableOpacity key={c.id} style={[styles.chip, cId === c.id && styles.chipActive]} onPress={() => setCId(c.id)}><Text style={styles.chipText}>{c.name}</Text></TouchableOpacity>)}
-                </ScrollView>
+                <FlatList
+                  horizontal
+                  data={[{ id: 'all', name: 'Generale' }, ...courses]}
+                  keyExtractor={(item) => item.id}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 6, paddingVertical: 6 }}
+                  renderItem={({ item }) => (
+                    <TouchableOpacity style={[styles.chip, cId === item.id && styles.chipActive]} onPress={() => setCId(item.id)}>
+                      <Text style={styles.chipText}>{item.name}</Text>
+                    </TouchableOpacity>
+                  )}
+                  keyboardShouldPersistTaps="handled"
+                />
                 
                 <Text style={styles.label}>Tempo Stimato (min)</Text>
                 <TextInput style={styles.input} value={tEst} keyboardType="numeric" onChangeText={setTEst} />

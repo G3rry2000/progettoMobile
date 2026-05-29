@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { StatCard } from '../components/StatCard';
@@ -51,7 +51,12 @@ export default function DashboardTab({ setTab, setTimerCourse, setTimerTask }: a
         {upcoming.length === 0 ? (
           <Text style={styles.emptyText}>Nessuna scadenza programmata.</Text>
         ) : (
-          upcoming.map((ex) => <UpcomingExamRow key={ex.id} exam={ex} courseName={getCourseName(ex.courseId)} />)
+          <FlatList
+            data={upcoming}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <UpcomingExamRow exam={item} courseName={getCourseName(item.courseId)} />}
+            contentContainerStyle={{ gap: 8 }}
+          />
         )}
       </View>
     </ScrollView>
