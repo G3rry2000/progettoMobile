@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, FlatList } from 'react-native';
+import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { StatCard } from '../components/StatCard';
@@ -21,11 +21,11 @@ export default function StatsTab() {
   });
 
   const pie = [
-  { label: 'Passati', value: exams.filter((e) => e.status === 'passed').length, color: '#06B6D4' },
-  { label: 'Programmati', value: exams.filter((e) => e.status === 'planned').length, color: '#8B5CF6' },
-  { label: 'Falliti', value: exams.filter((e) => e.status === 'failed').length, color: '#EF4444' },
-  { label: 'Annullati', value: exams.filter((e) => e.status === 'cancelled').length + (stats.deletedCancelledExams || 0), color: '#64748B' },
-];
+    { label: 'Passati', value: exams.filter((e) => e.status === 'passed').length, color: '#06B6D4' },
+    { label: 'Programmati', value: exams.filter((e) => e.status === 'planned').length, color: '#8B5CF6' },
+    { label: 'Falliti', value: exams.filter((e) => e.status === 'failed').length, color: '#EF4444' },
+    { label: 'Annullati', value: exams.filter((e) => e.status === 'cancelled').length + (stats.deletedCancelledExams || 0), color: '#64748B' },
+  ];
 
   return (
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -46,12 +46,10 @@ export default function StatsTab() {
         {courseData.length === 0 ? (
           <Text style={styles.empty}>Nessun corso presente.</Text>
         ) : (
-          <FlatList
-            data={courseData}
-            keyExtractor={(item) => item.id}
-            scrollEnabled={false}
-            renderItem={({ item: cd }) => (
-              <View style={styles.row}>
+          /* CORRETTO: Sostituita FlatList con un contenitore di .map() */
+          <View style={styles.courseListContainer}>
+            {courseData.map((cd) => (
+              <View key={cd.id} style={styles.row}>
                 <View style={styles.rowLeft}>
                   <Text style={styles.courseName}>{cd.name}</Text>
                   <Text style={styles.coursePct}>{cd.progress}%</Text>
@@ -60,33 +58,29 @@ export default function StatsTab() {
                   <View style={[styles.barFill, { width: `${Math.max(cd.progress, 3)}%`, backgroundColor: cd.color }]} />
                 </View>
               </View>
-            )}
-            contentContainerStyle={{ gap: 6 }}
-          />
+            ))}
+          </View>
         )}
       </View>
 
       <View style={styles.cardRow}>
-        <View style={[styles.card, { flex: 1, alignItems: 'center' }] }>
+        <View style={[styles.card, { flex: 1, alignItems: 'center' }]}>
           <Text style={styles.cardTitle}>Stato Esami</Text>
-          <PieChart data={pie} size={160} innerRadius={50} />
+          <PieChart data={pie} size={140} innerRadius={40} />
         </View>
 
-        <View style={[styles.card, { flex: 1 }] }>
+        <View style={[styles.card, { flex: 1 }]}>
           <Text style={styles.cardTitle}>Legenda</Text>
-          <FlatList
-            data={pie}
-            keyExtractor={(item) => item.label}
-            scrollEnabled={false}
-            contentContainerStyle={styles.pieList}
-            renderItem={({ item: p }) => (
-              <View style={styles.pieRow}>
+          {/* CORRETTO: Sostituita FlatList con un .map() pulito per la legenda */}
+          <View style={styles.pieList}>
+            {pie.map((p) => (
+              <View key={p.label} style={styles.pieRow}>
                 <View style={[styles.legendDot, { backgroundColor: p.color }]} />
-                <Text style={styles.legendLabel}>{p.label}</Text>
+                <Text style={styles.legendLabel} numberOfLines={1}>{p.label}</Text>
                 <Text style={styles.legendCount}>{p.value}</Text>
               </View>
-            )}
-          />
+            ))}
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -97,24 +91,21 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 90, alignSelf: 'center', width: '100%', maxWidth: 600 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   title: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
-
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 },
-
   card: { backgroundColor: 'rgba(30, 41, 59, 0.7)', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 12 },
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#FFF', marginBottom: 8 },
+  cardRow: { flexDirection: 'row', gap: 10 },
   empty: { fontSize: 12, color: '#64748B' },
-
+  courseListContainer: { gap: 4 },
   row: { marginBottom: 10 },
   rowLeft: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
-  courseName: { color: '#FFF', fontSize: 13 },
-  coursePct: { color: '#A78BFA', fontWeight: 'bold' },
-
-  barBg: { height: 10, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 6, overflow: 'hidden' },
+  courseName: { color: '#FFF', fontSize: 13, fontWeight: '500' },
+  coursePct: { color: '#A78BFA', fontWeight: 'bold', fontSize: 12 },
+  barBg: { height: 8, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 6, overflow: 'hidden' },
   barFill: { height: '100%', borderRadius: 6 },
-
-  pieList: { marginTop: 6 },
-  pieRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
-  legendDot: { width: 12, height: 12, borderRadius: 6, marginRight: 10 },
-  legendLabel: { flex: 1, color: '#94A3B8' },
-  legendCount: { color: '#FFF', fontWeight: '700' },
+  pieList: { marginTop: 4, gap: 2 },
+  pieRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 5 },
+  legendDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
+  legendLabel: { flex: 1, color: '#94A3B8', fontSize: 12 },
+  legendCount: { color: '#FFF', fontWeight: '700', fontSize: 12 },
 });

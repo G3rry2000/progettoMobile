@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Modal, Alert, FlatList } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 
@@ -30,7 +30,6 @@ export default function TimerTab({ timerCourse, setTimerCourse, timerTask, setTi
       intervalRef.current = setInterval(() => {
         setSeconds((s) => {
           if (s <= 1) {
-            // Usiamo setTimeout per spostare l'aggiornamento fuori dal ciclo di rendering immediato
             setTimeout(() => { handleComplete(); }, 10);
             return 0;
           }
@@ -83,7 +82,6 @@ export default function TimerTab({ timerCourse, setTimerCourse, timerTask, setTi
   };
 
   const skipTimer = () => {
-    // Spostiamo l'esecuzione fuori dal thread grafico principale per evitare cattivi accoppiamenti di stato
     setTimeout(() => { handleComplete(); }, 10);
   };
 
@@ -134,40 +132,53 @@ export default function TimerTab({ timerCourse, setTimerCourse, timerTask, setTi
         <Text style={styles.cardSub}>Associa lo studio ad un corso per accumulare ore di progresso ed ore nei task.</Text>
 
         <Text style={[styles.label, { marginTop: 12 }]}>Seleziona Corso</Text>
-        <FlatList
-          horizontal
-          data={courses}
-          keyExtractor={(item) => item.id}
+        
+        {/* CORRETTO: Sostituita FlatList con ScrollView + .map() */}
+        <ScrollView 
+          horizontal 
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
-          renderItem={({ item: c }) => (
-            <TouchableOpacity style={[styles.chip, timerCourse === c.id && styles.chipActive]} onPress={() => { setTimerCourse(c.id); setTimerTask(''); }}>
+          contentContainerStyle={styles.chipScrollContainer}
+        >
+          {courses.map((c) => (
+            <TouchableOpacity 
+              key={c.id} 
+              style={[styles.chip, timerCourse === c.id && styles.chipActive]} 
+              onPress={() => { setTimerCourse(c.id); setTimerTask(''); }}
+            >
               <Text style={[styles.chipText, timerCourse === c.id && styles.chipTextActive]}>{c.name}</Text>
             </TouchableOpacity>
-          )}
-        />
+          ))}
+        </ScrollView>
 
         {timerCourse && tasks.filter((t) => !t.completed && t.courseId === timerCourse).length > 0 ? (
-          <View>
+          <View style={{ marginTop: 4 }}>
             <Text style={styles.label}>Seleziona Task attivo</Text>
-            <FlatList
-              horizontal
-              data={[{ id: '__none', title: 'Nessuno / Solo Corso' }, ...tasks.filter((t) => !t.completed && t.courseId === timerCourse)]}
-              keyExtractor={(item) => item.id}
+            
+            {/* CORRETTO: Sostituita seconda FlatList con ScrollView + .map() */}
+            <ScrollView 
+              horizontal 
               showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
-              renderItem={({ item }) => (
-                item.id === '__none' ? (
-                  <TouchableOpacity style={[styles.chip, timerTask === '' && styles.chipActive]} onPress={() => setTimerTask('')}>
-                    <Text style={styles.chipText}>Nessuno / Solo Corso</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <TouchableOpacity style={[styles.chip, timerTask === item.id && styles.chipActive]} onPress={() => setTimerTask(item.id)}>
+              contentContainerStyle={styles.chipScrollContainer}
+            >
+              <TouchableOpacity 
+                style={[styles.chip, timerTask === '' && styles.chipActive]} 
+                onPress={() => setTimerTask('')}
+              >
+                <Text style={styles.chipText}>Nessuno / Solo Corso</Text>
+              </TouchableOpacity>
+
+              {tasks
+                .filter((t) => !t.completed && t.courseId === timerCourse)
+                .map((item) => (
+                  <TouchableOpacity 
+                    key={item.id} 
+                    style={[styles.chip, timerTask === item.id && styles.chipActive]} 
+                    onPress={() => setTimerTask(item.id)}
+                  >
                     <Text style={[styles.chipText, timerTask === item.id && styles.chipTextActive]}>{item.title}</Text>
                   </TouchableOpacity>
-                )
-              )}
-            />
+                ))}
+            </ScrollView>
           </View>
         ) : null}
       </View>
@@ -185,7 +196,7 @@ export default function TimerTab({ timerCourse, setTimerCourse, timerTask, setTi
             <Ionicons name="trophy" size={50} color="#F59E0B" style={{ alignSelf: 'center', marginBottom: 12 }} />
             <Text style={[styles.modalTitle, { textAlign: 'center' }]}>Grande Lavoro! 🎉</Text>
             <Text style={[styles.cardDesc, { textAlign: 'center', marginBottom: 16 }]}>
-              Hai completato con successo un ciclo di studio di 25 minuti!
+              Hai completato con successo un ciclo di studio di 25 minutes!
             </Text>
             
             <View style={styles.receipt}>
@@ -217,6 +228,7 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#FFF' },
   cardSub: { fontSize: 11, color: '#64748B', marginBottom: 8 },
   label: { fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', marginTop: 10, marginBottom: 6, fontWeight: 'bold' },
+  chipScrollContainer: { gap: 6, paddingVertical: 4 },
   chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.02)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   chipActive: { backgroundColor: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.3)' },
   chipText: { fontSize: 11, color: '#94A3B8', fontWeight: '600' },

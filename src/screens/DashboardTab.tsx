@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, Text, ScrollView, FlatList } from 'react-native';
+import { StyleSheet, View, Text, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { StatCard } from '../components/StatCard';
@@ -11,6 +11,7 @@ export default function DashboardTab({ setTab, setTimerCourse, setTimerTask }: a
   const { stats, smartSuggestion, exams, courses } = useStudy();
   const getCourseName = (id: string) => courses.find((c) => c.id === id)?.name || 'Corso';
 
+  // Prende i primi 2 esami pianificati
   const upcoming = exams
     .filter((e) => e.status === 'planned')
     .sort((a, b) => a.date.localeCompare(b.date))
@@ -20,8 +21,17 @@ export default function DashboardTab({ setTab, setTimerCourse, setTimerTask }: a
     <FlatList
       data={upcoming}
       keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <View style={styles.card}><UpcomingExamRow exam={item} courseName={getCourseName(item.courseId)} /></View>}
       contentContainerStyle={styles.scroll}
+      showsVerticalScrollIndicator={false}
+      
+      // Renderizza l'esame singolo all'interno della lista con la card dedicata
+      renderItem={({ item }) => (
+        <View style={styles.examCard}>
+          <UpcomingExamRow exam={item} courseName={getCourseName(item.courseId)} />
+        </View>
+      )}
+      
+      // Tutto il blocco superiore della dashboard per evitare il nesting errato di liste o scroll
       ListHeaderComponent={() => (
         <>
           <View style={styles.header}>
@@ -52,11 +62,13 @@ export default function DashboardTab({ setTab, setTimerCourse, setTimerTask }: a
 
           <WeeklyChart weeklyData={stats.weeklyStudyMinutes} />
 
-          <Text style={[styles.cardTitle, { marginTop: 12, marginBottom: 8 }]}>Prossime Scadenze</Text>
+          <Text style={[styles.cardTitle, { marginTop: 16, marginBottom: 8 }]}>Prossime Scadenze</Text>
         </>
       )}
+      
+      // Fallback grafico pulito ed elegante se l'array "upcoming" è vuoto
       ListEmptyComponent={() => (
-        <View style={styles.card}>
+        <View style={styles.emptyCard}>
           <Text style={styles.emptyText}>Nessuna scadenza programmata.</Text>
         </View>
       )}
@@ -70,7 +82,10 @@ const styles = StyleSheet.create({
   welcomeText: { fontSize: 22, fontWeight: 'bold', color: '#FFF' },
   dateText: { fontSize: 13, color: '#94A3B8', marginTop: 2 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
-  card: { backgroundColor: 'rgba(30, 41, 59, 0.7)', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 16 },
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#FFF' },
-  emptyText: { fontSize: 12, color: '#64748B', textAlign: 'center', paddingVertical: 12 },
+  // Card per i singoli esami della lista
+  examCard: { backgroundColor: 'rgba(30, 41, 59, 0.7)', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 8 },
+  // Card di fallback con stile tratteggiato se non ci sono esami imminenti
+  emptyCard: { backgroundColor: 'rgba(30, 41, 59, 0.4)', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderStyle: 'dashed' },
+  emptyText: { fontSize: 12, color: '#64748B', textAlign: 'center', paddingVertical: 4 },
 });

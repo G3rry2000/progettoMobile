@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, FlatList } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+  FlatList,
+  ScrollView
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { Exam } from '../types/study';
@@ -43,7 +57,7 @@ export default function EsamiTab() {
     }
 
     await addExam({ title: title.trim(), courseId: finalCourseId, date, type: 'written', priority: 'medium', status: 'planned' });
-    setTitle(''); setCourseId(''); setModal(false);
+    setTitle(''); setCourseId(courses[0]?.id || ''); setModal(false);
   };
 
   const handleSaveResult = async () => {
@@ -148,72 +162,74 @@ export default function EsamiTab() {
         )}
       />
 
-      {/* PLAN MODAL CON GESTIONE TASTIERA */}
+      {/* PLAN MODAL RISOLTA SENZA ANNIDAMENTI DI FLATLIST */}
       <Modal visible={modal} transparent animationType="slide">
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={styles.modal}>
-              <View style={styles.rowSpace}>
-                <Text style={styles.modalTitle}>Pianifica Esame 📅</Text>
-                <TouchableOpacity onPress={() => setModal(false)}><Ionicons name="close" size={24} color="#FFF" /></TouchableOpacity>
+          <View style={styles.overlay}>
+            <KeyboardAvoidingView style={{ width: '100%' }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+              <View style={styles.modal}>
+                <View style={styles.rowSpace}>
+                  <Text style={styles.modalTitle}>Pianifica Esame 📅</Text>
+                  <TouchableOpacity onPress={() => setModal(false)}><Ionicons name="close" size={24} color="#FFF" /></TouchableOpacity>
+                </View>
+                
+                <View style={{ marginVertical: 12 }}>
+                  <Text style={styles.label}>Titolo Scadenza *</Text>
+                  <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Es. Appello Scritto" placeholderTextColor="#64748B" />
+                  
+                  <Text style={styles.label}>Corso Associato</Text>
+                  {/* FIX PROFESSIONALE: Uno ScrollView orizzontale nativo con mappaggio .map() leggero */}
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
+                  >
+                    {courses.map((c) => (
+                      <TouchableOpacity key={c.id} style={[styles.chip, courseId === c.id && styles.chipActive]} onPress={() => setCourseId(c.id)}>
+                        <Text style={[styles.chipText, courseId === c.id && styles.chipTextActive]}>{c.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                  
+                  <Text style={styles.label}>Data (AAAA-MM-GG)</Text>
+                  <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="AAAA-MM-GG" placeholderTextColor="#64748B" />
+                </View>
+
+                <View style={[styles.row, { marginTop: 12 }]}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setModal(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}><Text style={styles.saveBtnText}>Crea</Text></TouchableOpacity>
+                </View>
               </View>
-              <FlatList
-                style={{ marginVertical: 12 }}
-                data={[]} // placeholder, keep keyboard handling simple
-                ListFooterComponent={() => (
-                  <>
-                    <Text style={styles.label}>Titolo Scadenza *</Text>
-                    <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Es. Appello Scritto" placeholderTextColor="#64748B" />
-                    <Text style={styles.label}>Corso Associato</Text>
-                    <FlatList
-                      horizontal
-                      data={courses}
-                      keyExtractor={(item) => item.id}
-                      showsHorizontalScrollIndicator={false}
-                      contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
-                      renderItem={({ item: c }) => (
-                        <TouchableOpacity style={[styles.chip, courseId === c.id && styles.chipActive]} onPress={() => setCourseId(c.id)}>
-                          <Text style={[styles.chipText, courseId === c.id && styles.chipTextActive]}>{c.name}</Text>
-                        </TouchableOpacity>
-                      )}
-                    />
-                    <Text style={styles.label}>Data (AAAA-MM-GG)</Text>
-                    <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="AAAA-MM-GG" placeholderTextColor="#64748B" />
-                  </>
-                )}
-              />
-              <View style={[styles.row, { marginTop: 12 }]}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => setModal(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}><Text style={styles.saveBtnText}>Crea</Text></TouchableOpacity>
-              </View>
-            </View>
-          </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </View>
         </TouchableWithoutFeedback>
       </Modal>
 
       {/* LOG ESITO MODAL CON GESTIONE TASTIERA */}
       <Modal visible={resultModal} transparent animationType="slide">
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={styles.modal}>
-              <Text style={styles.modalTitle}>Registra Esito</Text>
-              <Text style={styles.label}>Esito</Text>
-              <View style={[styles.row, { marginVertical: 8 }]}>
-                <TouchableOpacity style={[styles.chip, eStatus === 'passed' && styles.chipActive]} onPress={() => setEStatus('passed')}><Text style={styles.chipText}>Superato</Text></TouchableOpacity>
-                <TouchableOpacity style={[styles.chip, eStatus === 'failed' && styles.chipActive]} onPress={() => setEStatus('failed')}><Text style={styles.chipText}>Respinto</Text></TouchableOpacity>
-              </View>
-              {eStatus === 'passed' && (
-                <View>
-                  <Text style={styles.label}>Voto Conseguito (Es. 27 o 30L)</Text>
-                  <TextInput style={styles.input} value={grade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setGrade} />
+          <View style={styles.overlay}>
+            <KeyboardAvoidingView style={{ width: '100%' }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+              <View style={styles.modal}>
+                <Text style={styles.modalTitle}>Registra Esito</Text>
+                <Text style={styles.label}>Esito</Text>
+                <View style={[styles.row, { marginVertical: 8 }]}>
+                  <TouchableOpacity style={[styles.chip, eStatus === 'passed' && styles.chipActive]} onPress={() => setEStatus('passed')}><Text style={styles.chipText}>Superato</Text></TouchableOpacity>
+                  <TouchableOpacity style={[styles.chip, eStatus === 'failed' && styles.chipActive]} onPress={() => setEStatus('failed')}><Text style={styles.chipText}>Respinto</Text></TouchableOpacity>
                 </View>
-              )}
-              <View style={[styles.row, { marginTop: 16 }]}>
-                <TouchableOpacity style={styles.cancelBtn} onPress={() => { setResultModal(false); setSelectedEx(null); }}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
-                <TouchableOpacity style={styles.saveBtn} onPress={handleSaveResult}><Text style={styles.saveBtnText}>Registra</Text></TouchableOpacity>
+                {eStatus === 'passed' && (
+                  <View>
+                    <Text style={styles.label}>Voto Conseguito (Es. 27 o 30L)</Text>
+                    <TextInput style={styles.input} value={grade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setGrade} />
+                  </View>
+                )}
+                <View style={[styles.row, { marginTop: 16 }]}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => { setResultModal(false); setSelectedEx(null); }}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.saveBtn} onPress={handleSaveResult}><Text style={styles.saveBtnText}>Registra</Text></TouchableOpacity>
+                </View>
               </View>
-            </View>
-          </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </View>
         </TouchableWithoutFeedback>
       </Modal>
     </View>
