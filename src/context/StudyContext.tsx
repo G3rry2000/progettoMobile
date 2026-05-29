@@ -93,6 +93,12 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const addExam = async (eData: Omit<Exam, 'id'>) => {
+    // BLOCCO DI SICUREZZA: Verifica se il corso a cui si vuole associare l'esame è già superato
+    const targetCourse = courses.find((c) => c.id === eData.courseId);
+    if (targetCourse && targetCourse.status === 'passed') {
+      throw new Error("COURSE_ALREADY_PASSED");
+    }
+
     const ne = { ...eData, id: 'exam_' + Date.now().toString() };
     const updated = [...exams, ne]; setExams(updated);
     await AsyncStorage.setItem(STORAGE_KEYS.EXAMS, JSON.stringify(updated));
@@ -102,8 +108,10 @@ export const StudyProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updated = exams.map((e) => {
       if (e.id === id) {
         const ne = { ...e, ...fields };
-        if (fields.status === 'passed' && fields.grade !== undefined) {
-          updateCourse(e.courseId, { status: 'passed', obtainedGrade: fields.grade });
+        // MODIFICATO: Se l'esame è superato, aggiorna solo lo stato del corso a 'passed'.
+        // Il voto non viene più memorizzato all'interno dell'esame, ma verrà gestito centralmente nei Corsi.
+        if (fields.status === 'passed') {
+          updateCourse(e.courseId, { status: 'passed' });
         }
         return ne;
       }

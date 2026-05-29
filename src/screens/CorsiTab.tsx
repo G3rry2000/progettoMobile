@@ -48,6 +48,7 @@ export default function CorsiTab() {
   const [editProf, setEditProf] = useState('');
   const [editCfu, setEditCfu] = useState('6');
   const [editGrade, setEditGrade] = useState('');
+  const [editStatus, setEditStatus] = useState<Course['status']>('in_prog');
 
   const filtered = courses.filter((c) => {
     const matchesSearch = c.name.toLowerCase().includes(search.toLowerCase()) || c.professor.toLowerCase().includes(search.toLowerCase());
@@ -112,10 +113,15 @@ export default function CorsiTab() {
       }
     }
 
+    // Se viene inserito un voto o lo stato viene esplicitamente impostato su superato
+    const finalStatus = finalGrade || editStatus === 'passed' ? 'passed' : editStatus;
+
     await updateCourse(cId, {
-      name: editName, professor: editProf, cfu: parseInt(editCfu) || 6,
+      name: editName, 
+      professor: editProf, 
+      cfu: parseInt(editCfu) || 6,
       obtainedGrade: finalGrade,
-      status: finalGrade ? 'passed' : selectedCourse?.status
+      status: finalStatus
     });
 
     const updated = courses.find((c) => c.id === cId);
@@ -145,7 +151,7 @@ export default function CorsiTab() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ gap: 8, paddingHorizontal: 16 }}
         >
-          {(['all', 'in_prog', 'passed', 'to_start'] as const).map((f) => (
+          {(([ 'all', 'in_prog', 'passed', 'to_start' ]) as const).map((f) => (
             <TouchableOpacity key={f} style={[styles.chip, filter === f && styles.chipActive]} onPress={() => setFilter(f)}>
               <Text style={[styles.chipText, filter === f && styles.chipTextActive]}>
                 {f === 'all' ? 'Tutti' : f === 'in_prog' ? 'In Corso' : f === 'passed' ? 'Superati' : 'Da Iniziare'}
@@ -169,6 +175,7 @@ export default function CorsiTab() {
                 setEditName(c.name);
                 setEditProf(c.professor);
                 setEditCfu(c.cfu.toString());
+                setEditStatus(c.status);
                 setEditGrade(c.obtainedGrade ? (c.obtainedGrade === 31 ? '30L' : c.obtainedGrade.toString()) : '');
               }}
             />
@@ -178,7 +185,7 @@ export default function CorsiTab() {
         />
       )}
 
-      {/* CREA CORSO MODAL */}
+      {/* CREA CORSO MODAL COERENTE CON STATO INIZIALE */}
       <Modal visible={addModal} animationType="slide" transparent>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
@@ -192,6 +199,7 @@ export default function CorsiTab() {
                 <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Es. Sviluppo Mobile" placeholderTextColor="#64748B" />
                 <Text style={styles.label}>Docente</Text>
                 <TextInput style={styles.input} value={professor} onChangeText={setProfessor} placeholder="Es. Prof. Rossi" placeholderTextColor="#64748B" />
+                
                 <View style={styles.row}>
                   <View style={{ flex: 1, marginRight: 8 }}>
                     <Text style={styles.label}>CFU</Text>
@@ -202,6 +210,24 @@ export default function CorsiTab() {
                     <TextInput style={styles.input} value={expectedGrade} keyboardType="numeric" onChangeText={setExpectedGrade} />
                   </View>
                 </View>
+
+                {/* COMPONENTE: SELETTORE STATO INIZIALE CORSO */}
+                <Text style={styles.label}>Stato Iniziale Corso</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, marginBottom: 8 }}>
+                  <TouchableOpacity 
+                    style={[styles.chip, cStatus === 'in_prog' && { backgroundColor: 'rgba(59, 130, 246, 0.15)', borderColor: '#3B82F6' }]} 
+                    onPress={() => setCStatus('in_prog')}
+                  >
+                    <Text style={[styles.chipText, cStatus === 'in_prog' && { color: '#60A5FA' }]}>🎯 In Corso</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.chip, cStatus === 'to_start' && { backgroundColor: 'rgba(148, 163, 184, 0.15)', borderColor: '#94A3B8' }]} 
+                    onPress={() => setCStatus('to_start')}
+                  >
+                    <Text style={[styles.chipText, cStatus === 'to_start' && { color: '#CBD5E1' }]}>⏳ Da Iniziare</Text>
+                  </TouchableOpacity>
+                </View>
+
                 <Text style={styles.label}>Note / Descrizione</Text>
                 <TextInput style={[styles.input, { height: 60 }]} value={desc} onChangeText={setDesc} multiline placeholder="Note sul corso..." placeholderTextColor="#64748B" />
               </ScrollView>
@@ -234,8 +260,30 @@ export default function CorsiTab() {
                       <TextInput style={styles.input} value={editProf} onChangeText={setEditProf} />
                       <Text style={styles.label}>CFU</Text>
                       <TextInput style={styles.input} value={editCfu} keyboardType="numeric" onChangeText={setEditCfu} />
-                      <Text style={styles.label}>Voto Ottenuto (Es. 28 o 30L)</Text>
-                      <TextInput style={styles.input} value={editGrade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setEditGrade} />
+                      
+                      <Text style={styles.label}>Stato Corso</Text>
+                      <View style={{ flexDirection: 'row', gap: 6, marginVertical: 4 }}>
+                        {(([ 'to_start', 'in_prog', 'passed' ]) as const).map((st) => (
+                          <TouchableOpacity 
+                            key={st} 
+                            style={[styles.chip, editStatus === st && styles.chipActive]} 
+                            onPress={() => {
+                              setEditStatus(st);
+                              if (st !== 'passed') setEditGrade('');
+                            }}
+                          >
+                            <Text style={[styles.chipText, editStatus === st && styles.chipTextActive]}>{getStatusLabel(st)}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+
+                      {(editStatus === 'passed' || editGrade.length > 0) && (
+                        <View>
+                          <Text style={styles.label}>Voto Finale Conseguito (Es. 28 o 30L)</Text>
+                          <TextInput style={styles.input} value={editGrade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setEditGrade} />
+                        </View>
+                      )}
+
                       <View style={[styles.row, { marginTop: 12 }]}>
                         <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditMode(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
                         <TouchableOpacity style={styles.saveBtn} onPress={() => handleSaveEdit(selectedCourse.id)}><Text style={styles.saveBtnText}>Salva</Text></TouchableOpacity>
@@ -248,7 +296,11 @@ export default function CorsiTab() {
                         <Text style={styles.courseCfuText}>{selectedCourse.cfu} CFU</Text>
                       </View>
                       <View style={[styles.tagBadge, { backgroundColor: 'rgba(255,255,255,0.03)', alignSelf: 'flex-start' }]}>
-                        <Text style={[styles.tagText, { color: getStatusColor(selectedCourse.status) }]}>{getStatusLabel(selectedCourse.status).toUpperCase()}</Text>
+                        <Text style={[styles.tagText, { color: getStatusColor(selectedCourse.status) }]}>
+                          {selectedCourse.status === 'passed' && selectedCourse.obtainedGrade
+                            ? `SUPERATO • VOTO: ${selectedCourse.obtainedGrade === 31 ? '30L' : selectedCourse.obtainedGrade}`
+                            : getStatusLabel(selectedCourse.status).toUpperCase()}
+                        </Text>
                       </View>
 
                       {selectedCourse.description ? (
@@ -269,11 +321,14 @@ export default function CorsiTab() {
                         </View>
                       </View>
 
-                      {/* SEZIONE COMPONENTI ASSOCIATI CORRETTA CON .MAP */}
                       <View style={[styles.receipt, { gap: 4 }]}>
                         <View style={styles.rowSpace}>
                           <Text style={styles.cardTitle}>Task Associati</Text>
-                          <TouchableOpacity onPress={() => setAddTaskModal(true)}><Text style={{ fontSize: 11, color: '#A78BFA', fontWeight: 'bold' }}>+ Aggiungi</Text></TouchableOpacity>
+                          {selectedCourse.status !== 'passed' && (
+                            <TouchableOpacity onPress={() => setAddTaskModal(true)}>
+                              <Text style={{ fontSize: 11, color: '#A78BFA', fontWeight: 'bold' }}>+ Aggiungi</Text>
+                            </TouchableOpacity>
+                          )}
                         </View>
                         {tasks.filter((t)=>t.courseId===selectedCourse.id).length === 0 ? (
                           <Text style={styles.emptyText}>Nessun task per questo corso.</Text>
@@ -281,7 +336,10 @@ export default function CorsiTab() {
                           <View style={{ marginTop: 4 }}>
                             {tasks.filter((t)=>t.courseId===selectedCourse.id).map((task) => (
                               <View key={task.id} style={styles.taskRow}>
-                                <TouchableOpacity onPress={() => toggleTaskCompleted(task.id)}>
+                                <TouchableOpacity 
+                                  disabled={selectedCourse.status === 'passed'} 
+                                  onPress={() => toggleTaskCompleted(task.id)}
+                                >
                                   <Ionicons name={task.completed ? "checkbox" : "square-outline"} size={18} color={task.completed ? "#10B981" : "#FFF"} />
                                 </TouchableOpacity>
                                 <Text style={[styles.taskText, task.completed && styles.lineThrough, { flex: 1, marginLeft: 8 }]}>{task.title}</Text>
@@ -290,6 +348,12 @@ export default function CorsiTab() {
                           </View>
                         )}
                       </View>
+
+                      {selectedCourse.status !== 'passed' && (
+                        <TouchableOpacity style={styles.saveBtn} onPress={() => setAddSessionModal(true)}>
+                          <Text style={styles.saveBtnText}>🚀 Registra Sessione Studio</Text>
+                        </TouchableOpacity>
+                      )}
 
                       <View style={[styles.row, { marginTop: 12 }]}>
                         <TouchableOpacity style={[styles.cancelBtn, { borderColor: '#8B5CF6' }]} onPress={() => setEditMode(true)}><Text style={[styles.cancelBtnText, { color: '#8B5CF6' }]}>Modifica</Text></TouchableOpacity>

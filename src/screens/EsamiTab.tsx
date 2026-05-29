@@ -30,7 +30,6 @@ export default function EsamiTab() {
 
   const [resultModal, setResultModal] = useState(false);
   const [selectedEx, setSelectedEx] = useState<Exam | null>(null);
-  const [grade, setGrade] = useState('30');
   const [eStatus, setEStatus] = useState<'passed' | 'failed'>('passed');
 
   const getCourseName = (id: string) => courses.find((c) => c.id === id)?.name || 'Corso';
@@ -45,7 +44,7 @@ export default function EsamiTab() {
     if (date < oggiStr) {
       Alert.alert(
         'Data Non Valida ⚠️',
-        "Non puoi pianificare un esame in una data passata. Se lo hai già sostenuto, inseriscilo con la data odierna o futura e poi registrane l'esito."
+        "Non puoi pianificare un esame in una data passata. Se lo hai già sostenuto, inseriscilo con la data odierna o futura nel Tab Corsi per registrarne l'esito finale."
       );
       return;
     }
@@ -56,35 +55,38 @@ export default function EsamiTab() {
       return;
     }
 
-    await addExam({ title: title.trim(), courseId: finalCourseId, date, type: 'written', priority: 'medium', status: 'planned' });
-    setTitle(''); setCourseId(courses[0]?.id || ''); setModal(false);
+    try {
+      await addExam({ title: title.trim(), courseId: finalCourseId, date, type: 'written', priority: 'medium', status: 'planned' });
+      setTitle(''); 
+      setModal(false);
+    } catch (error: any) {
+      if (error.message === "COURSE_ALREADY_PASSED") {
+        Alert.alert(
+          "Corso Già Superato! 🛡️",
+          "Questo insegnamento è già stato contrassegnato come terminato e superato. Non è possibile pianificare ulteriori scadenze o prove parziali per esso."
+        );
+      } else {
+        Alert.alert("Errore", "Impossibile salvare la scadenza.");
+      }
+    }
   };
 
   const handleSaveResult = async () => {
     if (!selectedEx) return;
-    let finalGrade: number | undefined = undefined;
 
+    // Il voto viene rimosso dal singolo appello. Passiamo solo lo stato.
+    // Se lo stato è 'passed', il Context si occuperà di aggiornare il Corso a 'passed'.
+    await updateExam(selectedEx.id, { status: eStatus });
+    
     if (eStatus === 'passed') {
-      const cleanInput = grade.trim().toLowerCase();
-      if (cleanInput === '30l' || cleanInput === '30 lode' || cleanInput === '30 e lode') {
-        finalGrade = 31;
-      } else {
-        const votoNum = parseInt(cleanInput);
-        if (isNaN(votoNum) || votoNum < 18 || votoNum > 30) {
-          Alert.alert('Voto Errato ⚠️', "Un esame superato deve avere un voto numerico tra 18 e 30. Scrivi '30L' per registrare la lode.");
-          return;
-        }
-        finalGrade = votoNum;
-      }
+      Alert.alert(
+        "Corso Completato! 🎉",
+        "L'esame è stato registrato come superato. Ricordati di andare nel Tab 'Corsi' per inserire il voto finale ufficiale all'interno della scheda della materia."
+      );
     }
 
-    await updateExam(selectedEx.id, { status: eStatus, grade: finalGrade });
-    setResultModal(false); setSelectedEx(null);
-  };
-
-  const renderPastGrade = (g?: number) => {
-    if (!g) return '';
-    return g === 31 ? '30L' : g.toString();
+    setResultModal(false); 
+    setSelectedEx(null);
   };
 
   const examsData = courses.length === 0 ? [] : (examTab === 'upcoming' ? upcomingList : pastList);
@@ -100,7 +102,11 @@ export default function EsamiTab() {
             <View style={styles.tabHeader}>
               <Text style={styles.title}>Esami & Scadenze 📅</Text>
               {courses.length > 0 && (
-                <TouchableOpacity style={styles.addButton} onPress={() => setModal(true)}>
+                <TouchableOpacity style={styles.addButton} onPress={() => {
+                  // Resetta il corso selezionato sul primo disponibile all'apertura del modale
+                  if (courses.length > 0) setCourseId(courses[0].id);
+                  setModal(true);
+                }}>
                   <Ionicons name="add" size={18} color="#FFF" />
                   <Text style={styles.addButtonText}>Pianifica</Text>
                 </TouchableOpacity>
@@ -130,7 +136,7 @@ export default function EsamiTab() {
               <View style={[styles.rowSpace, { marginTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.03)', paddingTop: 8 }]}>
                 <Text style={{ fontSize: 11, color: '#64748B' }}>Tipo: {ex.type.toUpperCase()}</Text>
                 <View style={styles.rowAlign}>
-                  <TouchableOpacity style={styles.completeBtn} onPress={() => { setSelectedEx(ex); setResultModal(true); }}>
+                  <TouchableOpacity style={styles.completeBtn} onPress={() => { setSelectedEx(ex); setEStatus('passed'); setResultModal(true); }}>
                     <Text style={styles.completeBtnText}>Esito</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={{ marginLeft: 12 }} onPress={() => {
@@ -149,7 +155,7 @@ export default function EsamiTab() {
               <View style={styles.rowSpace}>
                 <Text style={styles.courseCardName}>{ex.title}</Text>
                 <Text style={[styles.tagText, { color: ex.status === 'passed' ? '#10B981' : '#EF4444', fontWeight: 'bold' }]}>
-                  {ex.status === 'passed' ? `SUPERATO VOTO: ${renderPastGrade(ex.grade)}` : 'NON SUPERATO'}
+                  {ex.status === 'passed' ? 'SUPERATO' : 'NON SUPERATO'}
                 </Text>
               </View>
               <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
@@ -162,7 +168,7 @@ export default function EsamiTab() {
         )}
       />
 
-      {/* PLAN MODAL RISOLTA SENZA ANNIDAMENTI DI FLATLIST */}
+      {/* PLAN MODAL CON BLOCCO PREVENTIVO PER CORSI PASSED */}
       <Modal visible={modal} transparent animationType="slide">
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.overlay}>
@@ -178,15 +184,34 @@ export default function EsamiTab() {
                   <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Es. Appello Scritto" placeholderTextColor="#64748B" />
                   
                   <Text style={styles.label}>Corso Associato</Text>
-                  {/* FIX PROFESSIONALE: Uno ScrollView orizzontale nativo con mappaggio .map() leggero */}
                   <ScrollView 
                     horizontal 
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
                   >
                     {courses.map((c) => (
-                      <TouchableOpacity key={c.id} style={[styles.chip, courseId === c.id && styles.chipActive]} onPress={() => setCourseId(c.id)}>
-                        <Text style={[styles.chipText, courseId === c.id && styles.chipTextActive]}>{c.name}</Text>
+                      <TouchableOpacity 
+                        key={c.id} 
+                        style={[
+                          styles.chip, 
+                          courseId === c.id && styles.chipActive,
+                          c.status === 'passed' && { opacity: 0.4, backgroundColor: 'rgba(239,68,68,0.05)' }
+                        ]} 
+                        onPress={() => {
+                          if (c.status === 'passed') {
+                            Alert.alert("Attenzione 🔴", "Questo corso è già superato. Non puoi aggiungere scadenze.");
+                            return;
+                          }
+                          setCourseId(c.id);
+                        }}
+                      >
+                        <Text style={[
+                          styles.chipText, 
+                          courseId === c.id && styles.chipTextActive,
+                          c.status === 'passed' && { color: '#EF4444' }
+                        ]}>
+                          {c.name} {c.status === 'passed' ? '(Superato)' : ''}
+                        </Text>
                       </TouchableOpacity>
                     ))}
                   </ScrollView>
@@ -205,27 +230,26 @@ export default function EsamiTab() {
         </TouchableWithoutFeedback>
       </Modal>
 
-      {/* LOG ESITO MODAL CON GESTIONE TASTIERA */}
+      {/* LOG ESITO MODAL SENZA INPUT VOTO NUMERICO */}
       <Modal visible={resultModal} transparent animationType="slide">
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.overlay}>
             <KeyboardAvoidingView style={{ width: '100%' }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
               <View style={styles.modal}>
                 <Text style={styles.modalTitle}>Registra Esito</Text>
-                <Text style={styles.label}>Esito</Text>
-                <View style={[styles.row, { marginVertical: 8 }]}>
-                  <TouchableOpacity style={[styles.chip, eStatus === 'passed' && styles.chipActive]} onPress={() => setEStatus('passed')}><Text style={styles.chipText}>Superato</Text></TouchableOpacity>
-                  <TouchableOpacity style={[styles.chip, eStatus === 'failed' && styles.chipActive]} onPress={() => setEStatus('failed')}><Text style={styles.chipText}>Respinto</Text></TouchableOpacity>
+                <Text style={styles.label}>Esito della Prova</Text>
+                <View style={[styles.row, { marginVertical: 16 }]}>
+                  <TouchableOpacity style={[styles.chip, eStatus === 'passed' && styles.chipActive, { flex: 1, alignItems: 'center', paddingVertical: 12 }]} onPress={() => setEStatus('passed')}>
+                    <Text style={[styles.chipText, eStatus === 'passed' && styles.chipTextActive, { fontSize: 13 }]}>🎯 Superato</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={[styles.chip, eStatus === 'failed' && styles.chipActive, { flex: 1, alignItems: 'center', paddingVertical: 12 }]} onPress={() => setEStatus('failed')}>
+                    <Text style={[styles.chipText, eStatus === 'failed' && styles.chipTextActive, { fontSize: 13 }]}>❌ Respinto</Text>
+                  </TouchableOpacity>
                 </View>
-                {eStatus === 'passed' && (
-                  <View>
-                    <Text style={styles.label}>Voto Conseguito (Es. 27 o 30L)</Text>
-                    <TextInput style={styles.input} value={grade} placeholder="18-30 o 30L" placeholderTextColor="#64748B" onChangeText={setGrade} />
-                  </View>
-                )}
+                
                 <View style={[styles.row, { marginTop: 16 }]}>
                   <TouchableOpacity style={styles.cancelBtn} onPress={() => { setResultModal(false); setSelectedEx(null); }}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
-                  <TouchableOpacity style={styles.saveBtn} onPress={handleSaveResult}><Text style={styles.saveBtnText}>Registra</Text></TouchableOpacity>
+                  <TouchableOpacity style={styles.saveBtn} onPress={handleSaveResult}><Text style={styles.saveBtnText}>Conferma</Text></TouchableOpacity>
                 </View>
               </View>
             </KeyboardAvoidingView>
