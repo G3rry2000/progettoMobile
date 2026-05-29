@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
-  TextInput, 
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
   Modal,
-  KeyboardAvoidingView, 
-  Platform, 
-  TouchableWithoutFeedback, 
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
   Keyboard,
   FlatList
 } from 'react-native';
@@ -70,22 +69,19 @@ export default function AgendaTab() {
       </View>
 
       <View style={styles.stripContainer}>
-        <FlatList
-          horizontal
-          data={weekDays}
-          keyExtractor={(item) => item.dateStr}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingHorizontal: 8, justifyContent: 'center', alignItems: 'center' }}
-          renderItem={({ item: w }) => {
-            const act = w.dateStr === selectedDate;
-            return (
-              <TouchableOpacity style={[styles.dayChip, act && styles.dayChipActive, w.isToday && !act && { borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }]} onPress={() => setSelectedDate(w.dateStr)}>
-                <Text style={[styles.dayChipLabel, act && { color: '#A78BFA' }]}>{w.label}</Text>
-                <Text style={[styles.dayChipNum, act && { color: '#FFF' }]}>{w.dayNum}</Text>
-              </TouchableOpacity>
-            );
-          }}
-        />
+        {weekDays.map((w) => {
+          const act = w.dateStr === selectedDate;
+          return (
+            <TouchableOpacity
+              key={w.dateStr}
+              style={[styles.dayChip, act && styles.dayChipActive, w.isToday && !act && { borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }]}
+              onPress={() => setSelectedDate(w.dateStr)}
+            >
+              <Text style={[styles.dayChipLabel, act && { color: '#A78BFA' }]}>{w.label}</Text>
+              <Text style={[styles.dayChipNum, act && { color: '#FFF' }]}>{w.dayNum}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       <FlatList
@@ -100,20 +96,12 @@ export default function AgendaTab() {
                 <Text style={styles.emptyText}>Nessuna attività programmata.</Text>
               ) : (
                 <View style={{ gap: 6 }}>
-                  <FlatList
-                    data={dayTasks}
-                    keyExtractor={(item) => item.id}
-                    scrollEnabled={false}
-                    renderItem={({ item: t }) => <Text style={styles.cardDesc}>[TASK] {t.completed ? '✅' : '⏳'} {t.title} ({t.estimatedTime}m stima)</Text>}
-                    contentContainerStyle={{ gap: 6 }}
-                  />
-                  <FlatList
-                    data={daySessions}
-                    keyExtractor={(item) => item.id}
-                    scrollEnabled={false}
-                    renderItem={({ item: s }) => <Text style={[styles.cardDesc, { color: '#A78BFA' }]}>[STUDIO] ⏱️ {s.activityType.toUpperCase()} - {s.duration} min svolti</Text>}
-                    contentContainerStyle={{ gap: 6 }}
-                  />
+                  {dayTasks.map((t) => (
+                    <Text key={t.id} style={styles.cardDesc}>[TASK] {t.completed ? '✅' : '⏳'} {t.title} ({t.estimatedTime}m stima)</Text>
+                  ))}
+                  {daySessions.map((s) => (
+                    <Text key={s.id} style={[styles.cardDesc, { color: '#A78BFA' }]}>[STUDIO] ⏱️ {s.activityType.toUpperCase()} - {s.duration} min svolti</Text>
+                  ))}
                 </View>
               )}
             </View>
@@ -121,18 +109,11 @@ export default function AgendaTab() {
             <View style={styles.card}>
               <Text style={styles.cardTitle}>Checklist di Studio</Text>
               <View style={[styles.row, { marginBottom: 12, marginTop: 8 }]}> 
-                <FlatList
-                  horizontal
-                  data={['pending', 'completed', 'all']}
-                  keyExtractor={(item) => String(item)}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 8 }}
-                  renderItem={({ item: t }) => (
-                    <TouchableOpacity style={[styles.chip, tFilter === t && styles.chipActive]} onPress={() => setTFilter(t as any)}>
-                      <Text style={styles.chipText}>{t === 'pending' ? 'Attivi' : t === 'completed' ? 'Finiti' : 'Tutti'}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
+                {(['pending', 'completed', 'all'] as const).map((t) => (
+                  <TouchableOpacity key={t} style={[styles.chip, tFilter === t && styles.chipActive]} onPress={() => setTFilter(t)}>
+                    <Text style={styles.chipText}>{t === 'pending' ? 'Attivi' : t === 'completed' ? 'Finiti' : 'Tutti'}</Text>
+                  </TouchableOpacity>
+                ))}
               </View>
             </View>
           </>
@@ -171,19 +152,13 @@ export default function AgendaTab() {
                 <TextInput style={styles.input} value={tTitle} onChangeText={setTTitle} placeholder="Es. Ripasso slide..." placeholderTextColor="#64748B" />
                 
                 <Text style={styles.label}>Associa Corso</Text>
-                <FlatList
-                  horizontal
-                  data={[{ id: 'all', name: 'Generale' }, ...courses]}
-                  keyExtractor={(item) => item.id}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 6, paddingVertical: 6 }}
-                  renderItem={({ item }) => (
-                    <TouchableOpacity style={[styles.chip, cId === item.id && styles.chipActive]} onPress={() => setCId(item.id)}>
+                <View style={styles.courseRow}>
+                  {[{ id: 'all', name: 'Generale' }, ...courses].map((item) => (
+                    <TouchableOpacity key={item.id} style={[styles.chip, cId === item.id && styles.chipActive]} onPress={() => setCId(item.id)}>
                       <Text style={styles.chipText}>{item.name}</Text>
                     </TouchableOpacity>
-                  )}
-                  keyboardShouldPersistTaps="handled"
-                />
+                  ))}
+                </View>
                 
                 <Text style={styles.label}>Tempo Stimato (min)</Text>
                 <TextInput style={styles.input} value={tEst} keyboardType="numeric" onChangeText={setTEst} />
@@ -208,8 +183,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
   addButton: { backgroundColor: '#8B5CF6', flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, gap: 4 },
   addButtonText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
-  stripContainer: { paddingHorizontal: 8, marginBottom: 8, alignItems: 'center' },
-  dayChip: { width: 64, alignItems: 'center', paddingVertical: 8, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.01)', marginHorizontal: 6 },
+  stripContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 },
+  dayChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.01)', marginHorizontal: 4 },
   dayChipActive: { backgroundColor: 'rgba(139,92,246,0.15)', borderColor: 'rgba(139,92,246,0.3)', borderWidth: 1 },
   dayChipLabel: { fontSize: 8, color: '#64748B', fontWeight: 'bold' },
   dayChipNum: { fontSize: 13, color: '#F8FAFC', fontWeight: 'bold', marginTop: 2 },
@@ -221,6 +196,7 @@ const styles = StyleSheet.create({
   chip: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.02)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   chipActive: { backgroundColor: 'rgba(139, 92, 246, 0.15)', borderColor: 'rgba(139, 92, 246, 0.3)' },
   chipText: { fontSize: 11, color: '#94A3B8', fontWeight: '600' },
+  courseRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingVertical: 6 },
   taskItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.03)' },
   taskText: { fontSize: 13, color: '#FFF' },
   lineThrough: { textDecorationLine: 'line-through', color: '#64748B' },

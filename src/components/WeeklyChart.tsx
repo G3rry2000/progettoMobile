@@ -55,9 +55,9 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#FFF' },
   cardSub: { fontSize: 11, color: '#64748B', marginBottom: 8 },
   chart: { flexDirection: 'row', alignItems: 'flex-end', height: 120, paddingTop: 12, paddingHorizontal: 6 },
-  chartCol: { alignItems: 'center', width: 48, marginHorizontal: 6 },
+  chartCol: { alignItems: 'center', width: 52, marginHorizontal: 6 },
   barWrapper: { height: 70, width: '100%', justifyContent: 'flex-end', alignItems: 'center' },
   barVal: { fontSize: 9, color: '#A78BFA', fontWeight: 'bold', marginBottom: 4 },
   bar: { width: 14, borderRadius: 8 },
-  chartLbl: { fontSize: 10, color: '#64748B', marginTop: 8 },
+  chartLbl: { fontSize: 10, color: '#64748B', marginTop: 8, width: '100%', textAlign: 'center' },
 });
