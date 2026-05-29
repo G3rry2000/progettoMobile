@@ -115,6 +115,7 @@ export default function ExamiTab() {
               data={upcomingList}
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ gap: 12 }}
+              scrollEnabled={false}
               renderItem={({ item: ex }) => (
                 <View style={styles.card}>
                   <View style={styles.rowSpace}>
@@ -150,6 +151,7 @@ export default function ExamiTab() {
               data={pastList}
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ gap: 12 }}
+              scrollEnabled={false}
               renderItem={({ item: ex }) => (
                 <View style={styles.card}>
                   <View style={styles.rowSpace}>

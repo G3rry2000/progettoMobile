@@ -56,6 +56,7 @@ export default function DashboardTab({ setTab, setTimerCourse, setTimerTask }: a
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => <UpcomingExamRow exam={item} courseName={getCourseName(item.courseId)} />}
             contentContainerStyle={{ gap: 8 }}
+            scrollEnabled={false}
           />
         )}
       </View>

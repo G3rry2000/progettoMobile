@@ -266,6 +266,7 @@ export default function CorsiTab() {
                           <FlatList
                             data={tasks.filter((t)=>t.courseId===selectedCourse.id)}
                             keyExtractor={(item) => item.id}
+                            scrollEnabled={false}
                             renderItem={({ item: task }) => (
                               <View style={styles.taskRow}>
                                 <TouchableOpacity onPress={() => toggleTaskCompleted(task.id)}>
