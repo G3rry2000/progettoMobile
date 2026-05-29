@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, Modal, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import React, { useEffect, useRef, useState } from 'react';
+import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useStudy } from '../context/StudyContext';
 
 export default function TimerTab({ timerCourse, setTimerCourse, timerTask, setTimerTask }: any) {
@@ -133,7 +133,7 @@ export default function TimerTab({ timerCourse, setTimerCourse, timerTask, setTi
 
         <Text style={[styles.label, { marginTop: 12 }]}>Seleziona Corso</Text>
         
-        {/* CORRETTO: Sostituita FlatList con ScrollView + .map() */}
+        {/* Sostituita FlatList con ScrollView + .map() */}
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
@@ -154,7 +154,7 @@ export default function TimerTab({ timerCourse, setTimerCourse, timerTask, setTi
           <View style={{ marginTop: 4 }}>
             <Text style={styles.label}>Seleziona Task attivo</Text>
             
-            {/* CORRETTO: Sostituita seconda FlatList con ScrollView + .map() */}
+            {/* Sostituita seconda FlatList con ScrollView + .map() */}
             <ScrollView 
               horizontal 
               showsHorizontalScrollIndicator={false}

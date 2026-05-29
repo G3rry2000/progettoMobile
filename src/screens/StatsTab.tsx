@@ -1,9 +1,9 @@
-import React from 'react';
-import { StyleSheet, View, Text, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useStudy } from '../context/StudyContext';
-import { StatCard } from '../components/StatCard';
+import React from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import PieChart from '../components/PieChart';
+import { StatCard } from '../components/StatCard';
+import { useStudy } from '../context/StudyContext';
 
 export default function StatsTab() {
   const { stats, courses, exams, tasks } = useStudy();
@@ -46,7 +46,6 @@ export default function StatsTab() {
         {courseData.length === 0 ? (
           <Text style={styles.empty}>Nessun corso presente.</Text>
         ) : (
-          /* CORRETTO: Sostituita FlatList con un contenitore di .map() */
           <View style={styles.courseListContainer}>
             {courseData.map((cd) => (
               <View key={cd.id} style={styles.row}>
@@ -71,7 +70,7 @@ export default function StatsTab() {
 
         <View style={[styles.card, { flex: 1 }]}>
           <Text style={styles.cardTitle}>Legenda</Text>
-          {/* CORRETTO: Sostituita FlatList con un .map() pulito per la legenda */}
+          {/* .map() pulito per la legenda */}
           <View style={styles.pieList}>
             {pie.map((p) => (
               <View key={p.label} style={styles.pieRow}>

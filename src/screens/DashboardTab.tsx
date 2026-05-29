@@ -1,11 +1,11 @@
-import React from 'react';
-import { StyleSheet, View, Text, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useStudy } from '../context/StudyContext';
-import { StatCard } from '../components/StatCard';
+import React from 'react';
+import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { AssistantCard } from '../components/AssistantCard';
-import { WeeklyChart } from '../components/WeeklyChart';
+import { StatCard } from '../components/StatCard';
 import { UpcomingExamRow } from '../components/UpcomingExamRow';
+import { WeeklyChart } from '../components/WeeklyChart';
+import { useStudy } from '../context/StudyContext';
 
 export default function DashboardTab({ setTab, setTimerCourse, setTimerTask }: any) {
   const { stats, smartSuggestion, exams, courses } = useStudy();
@@ -66,7 +66,7 @@ export default function DashboardTab({ setTab, setTimerCourse, setTimerTask }: a
         </>
       )}
       
-      // Fallback grafico pulito ed elegante se l'array "upcoming" è vuoto
+      // Fallback grafico se l'array "upcoming" è vuoto
       ListEmptyComponent={() => (
         <View style={styles.emptyCard}>
           <Text style={styles.emptyText}>Nessuna scadenza programmata.</Text>

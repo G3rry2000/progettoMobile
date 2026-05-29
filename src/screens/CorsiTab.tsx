@@ -1,25 +1,25 @@
-import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  View, 
-  Text, 
-  ScrollView, 
-  TouchableOpacity, 
-  TextInput, 
-  Modal, 
-  Alert, 
-  KeyboardAvoidingView, 
-  Platform, 
-  TouchableWithoutFeedback, 
-  Keyboard, 
-  FlatList 
-} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useStudy } from '../context/StudyContext';
-import { Course } from '../types/study';
+import React, { useState } from 'react';
+import {
+  Alert,
+  FlatList,
+  Keyboard,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View
+} from 'react-native';
 import { CourseCard } from '../components/CourseCard';
 import { BaseFormModal } from '../components/SharedModals';
 import { getRelativeDateStr } from '../constants/initialData';
+import { useStudy } from '../context/StudyContext';
+import { Course } from '../types/study';
 
 export default function CorsiTab() {
   const { courses, addCourse, updateCourse, deleteCourse, tasks, sessions, addSession, addTask, toggleTaskCompleted } = useStudy();
@@ -113,7 +113,6 @@ export default function CorsiTab() {
       }
     }
 
-    // Se viene inserito un voto o lo stato viene esplicitamente impostato su superato
     const finalStatus = finalGrade || editStatus === 'passed' ? 'passed' : editStatus;
 
     await updateCourse(cId, {
