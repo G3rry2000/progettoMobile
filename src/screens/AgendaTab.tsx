@@ -75,6 +75,7 @@ export default function AgendaTab() {
           data={weekDays}
           keyExtractor={(item) => item.dateStr}
           showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 8, justifyContent: 'center', alignItems: 'center' }}
           renderItem={({ item: w }) => {
             const act = w.dateStr === selectedDate;
             return (
@@ -87,13 +88,18 @@ export default function AgendaTab() {
         />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Pianificazione del Giorno</Text>
-          {dayTasks.length === 0 && daySessions.length === 0 ? (
-            <Text style={styles.emptyText}>Nessuna attività programmata.</Text>
-          ) : (
-            <View style={{ gap: 6 }}>
+      <FlatList
+        data={checklistTasks}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.scroll}
+        ListHeaderComponent={() => (
+          <>
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Pianificazione del Giorno</Text>
+              {dayTasks.length === 0 && daySessions.length === 0 ? (
+                <Text style={styles.emptyText}>Nessuna attività programmata.</Text>
+              ) : (
+                <View style={{ gap: 6 }}>
                   <FlatList
                     data={dayTasks}
                     keyExtractor={(item) => item.id}
@@ -108,48 +114,47 @@ export default function AgendaTab() {
                     renderItem={({ item: s }) => <Text style={[styles.cardDesc, { color: '#A78BFA' }]}>[STUDIO] ⏱️ {s.activityType.toUpperCase()} - {s.duration} min svolti</Text>}
                     contentContainerStyle={{ gap: 6 }}
                   />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Checklist di Studio</Text>
-          <View style={[styles.row, { marginBottom: 12, marginTop: 8 }]}> 
-            <FlatList
-              horizontal
-              data={['pending', 'completed', 'all']}
-              keyExtractor={(item) => String(item)}
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 8 }}
-              renderItem={({ item: t }) => (
-                <TouchableOpacity style={[styles.chip, tFilter === t && styles.chipActive]} onPress={() => setTFilter(t as any)}>
-                  <Text style={styles.chipText}>{t === 'pending' ? 'Attivi' : t === 'completed' ? 'Finiti' : 'Tutti'}</Text>
-                </TouchableOpacity>
-              )}
-            />
-          </View>
-          {checklistTasks.length === 0 ? (
-            <Text style={styles.emptyText}>Nessun task attivo.</Text>
-          ) : (
-            <FlatList
-              data={checklistTasks}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item: t }) => (
-                <View style={styles.taskItem}>
-                  <TouchableOpacity onPress={() => toggleTaskCompleted(t.id)}>
-                    <Ionicons name={t.completed ? "checkbox" : "square-outline"} size={22} color={t.completed ? "#10B981" : "rgba(255,255,255,0.3)"} />
-                  </TouchableOpacity>
-                  <View style={{ flex: 1, marginLeft: 8 }}>
-                    <Text style={[styles.taskText, t.completed && styles.lineThrough]}>{t.title}</Text>
-                    <Text style={{ fontSize: 10, color: '#64748B' }}>Corso: {getCourseName(t.courseId)} {t.dueDate ? `• Scadenza: ${t.dueDate}` : ''}</Text>
-                  </View>
-                  <TouchableOpacity onPress={() => deleteTask(t.id)}><Ionicons name="trash" size={16} color="#EF4444" /></TouchableOpacity>
                 </View>
               )}
-            />
-          )}
-        </View>
-      </ScrollView>
+            </View>
+
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Checklist di Studio</Text>
+              <View style={[styles.row, { marginBottom: 12, marginTop: 8 }]}> 
+                <FlatList
+                  horizontal
+                  data={['pending', 'completed', 'all']}
+                  keyExtractor={(item) => String(item)}
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 8 }}
+                  renderItem={({ item: t }) => (
+                    <TouchableOpacity style={[styles.chip, tFilter === t && styles.chipActive]} onPress={() => setTFilter(t as any)}>
+                      <Text style={styles.chipText}>{t === 'pending' ? 'Attivi' : t === 'completed' ? 'Finiti' : 'Tutti'}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            </View>
+          </>
+        )}
+        renderItem={({ item: t }) => (
+          <View style={styles.taskItem}>
+            <TouchableOpacity onPress={() => toggleTaskCompleted(t.id)}>
+              <Ionicons name={t.completed ? "checkbox" : "square-outline"} size={22} color={t.completed ? "#10B981" : "rgba(255,255,255,0.3)"} />
+            </TouchableOpacity>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={[styles.taskText, t.completed && styles.lineThrough]}>{t.title}</Text>
+              <Text style={{ fontSize: 10, color: '#64748B' }}>Corso: {getCourseName(t.courseId)} {t.dueDate ? `• Scadenza: ${t.dueDate}` : ''}</Text>
+            </View>
+            <TouchableOpacity onPress={() => deleteTask(t.id)}><Ionicons name="trash" size={16} color="#EF4444" /></TouchableOpacity>
+          </View>
+        )}
+        ListEmptyComponent={() => (
+          <View style={styles.card}>
+            <Text style={styles.emptyText}>Nessun task attivo.</Text>
+          </View>
+        )}
+      />
 
       {/* CREATE MODAL CON STRUTTURA UNICA AGGIUSTATA PER TELEFONO */}
       <Modal visible={modal} transparent animationType="slide">
@@ -203,8 +208,8 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: 'bold', color: '#FFF' },
   addButton: { backgroundColor: '#8B5CF6', flexDirection: 'row', alignItems: 'center', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, gap: 4 },
   addButtonText: { color: '#FFF', fontSize: 12, fontWeight: 'bold' },
-  stripContainer: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 },
-  dayChip: { flex: 1, alignItems: 'center', paddingVertical: 6, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.01)' },
+  stripContainer: { paddingHorizontal: 8, marginBottom: 8, alignItems: 'center' },
+  dayChip: { width: 64, alignItems: 'center', paddingVertical: 8, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.01)', marginHorizontal: 6 },
   dayChipActive: { backgroundColor: 'rgba(139,92,246,0.15)', borderColor: 'rgba(139,92,246,0.3)', borderWidth: 1 },
   dayChipLabel: { fontSize: 8, color: '#64748B', fontWeight: 'bold' },
   dayChipNum: { fontSize: 13, color: '#F8FAFC', fontWeight: 'bold', marginTop: 2 },

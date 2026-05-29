@@ -17,50 +17,50 @@ export default function DashboardTab({ setTab, setTimerCourse, setTimerTask }: a
     .slice(0, 2);
 
   return (
-    <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.welcomeText}>Bentornato👋</Text>
-          <Text style={styles.dateText}>Pronto per una sessione di studio?</Text>
-        </View>
-        <Ionicons name="school" size={32} color="#8B5CF6" />
-      </View>
+    <FlatList
+      data={upcoming}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => <View style={styles.card}><UpcomingExamRow exam={item} courseName={getCourseName(item.courseId)} /></View>}
+      contentContainerStyle={styles.scroll}
+      ListHeaderComponent={() => (
+        <>
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.welcomeText}>Bentornato👋</Text>
+              <Text style={styles.dateText}>Pronto per una sessione di studio?</Text>
+            </View>
+            <Ionicons name="school" size={32} color="#8B5CF6" />
+          </View>
 
-      {smartSuggestion && (
-        <AssistantCard 
-          suggestion={smartSuggestion} 
-          onPressAction={() => {
-            setTimerCourse(smartSuggestion.courseId || '');
-            setTimerTask(smartSuggestion.taskId || '');
-            setTab('timer');
-          }}
-        />
+          {smartSuggestion && (
+            <AssistantCard 
+              suggestion={smartSuggestion} 
+              onPressAction={() => {
+                setTimerCourse(smartSuggestion.courseId || '');
+                setTimerTask(smartSuggestion.taskId || '');
+                setTab('timer');
+              }}
+            />
+          )}
+
+          <View style={styles.grid}>
+            <StatCard label="Media Ponderata" value={stats.weightedAverage > 0 ? stats.weightedAverage.toFixed(2) : '- -'} sub="Target Voti" />
+            <StatCard label="CFU Acquisiti" value={stats.passedCFU} sub={`Target: ${stats.totalCFU} CFU`} />
+            <StatCard label="Ore di Studio" value={`${stats.totalStudyHours}h`} sub="Focus Totale" />
+            <StatCard label="Task Finiti" value={`${stats.completedTasksCount}/${stats.completedTasksCount + stats.pendingTasksCount}`} sub="Checklist attiva" />
+          </View>
+
+          <WeeklyChart weeklyData={stats.weeklyStudyMinutes} />
+
+          <Text style={[styles.cardTitle, { marginTop: 12, marginBottom: 8 }]}>Prossime Scadenze</Text>
+        </>
       )}
-
-      <View style={styles.grid}>
-        <StatCard label="Media Ponderata" value={stats.weightedAverage > 0 ? stats.weightedAverage.toFixed(2) : '- -'} sub="Target Voti" />
-        <StatCard label="CFU Acquisiti" value={stats.passedCFU} sub={`Target: ${stats.totalCFU} CFU`} />
-        <StatCard label="Ore di Studio" value={`${stats.totalStudyHours}h`} sub="Focus Totale" />
-        <StatCard label="Task Finiti" value={`${stats.completedTasksCount}/${stats.completedTasksCount + stats.pendingTasksCount}`} sub="Checklist attiva" />
-      </View>
-
-      <WeeklyChart weeklyData={stats.weeklyStudyMinutes} />
-
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Prossime Scadenze</Text>
-        {upcoming.length === 0 ? (
+      ListEmptyComponent={() => (
+        <View style={styles.card}>
           <Text style={styles.emptyText}>Nessuna scadenza programmata.</Text>
-        ) : (
-          <FlatList
-            data={upcoming}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <UpcomingExamRow exam={item} courseName={getCourseName(item.courseId)} />}
-            contentContainerStyle={{ gap: 8 }}
-            scrollEnabled={false}
-          />
-        )}
-      </View>
-    </ScrollView>
+        </View>
+      )}
+    />
   );
 }
 

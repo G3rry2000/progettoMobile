@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, FlatList } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, TextInput, Modal, Alert, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, FlatList } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useStudy } from '../context/StudyContext';
 import { Exam } from '../types/study';
 import { getRelativeDateStr } from '../constants/initialData';
 
-export default function ExamiTab() {
+export default function EsamiTab() {
   const { exams, courses, addExam, updateExam, deleteExam } = useStudy();
   const [examTab, setExamTab] = useState<'upcoming' | 'past'>('upcoming');
   const [modal, setModal] = useState(false);
@@ -27,20 +27,18 @@ export default function ExamiTab() {
   const handleCreate = async () => {
     if (!title.trim()) return;
 
-    // 1. CONTROLLO BLOCCO DATE PASSATE
     const oggiStr = new Date().toISOString().split('T')[0];
     if (date < oggiStr) {
       Alert.alert(
-        "Data Non Valida ⚠️",
+        'Data Non Valida ⚠️',
         "Non puoi pianificare un esame in una data passata. Se lo hai già sostenuto, inseriscilo con la data odierna o futura e poi registrane l'esito."
       );
       return;
     }
 
-    // 2. CONTROLLO CORSO ASSOCIATO
     const finalCourseId = courseId || courses[0]?.id;
     if (!finalCourseId) {
-      Alert.alert("Errore", "Devi inserire almeno un corso nel tab 'Corsi' prima di pianificare una scadenza.");
+      Alert.alert('Errore', "Devi inserire almeno un corso nel tab 'Corsi' prima di pianificare una scadenza.");
       return;
     }
 
@@ -54,149 +52,136 @@ export default function ExamiTab() {
 
     if (eStatus === 'passed') {
       const cleanInput = grade.trim().toLowerCase();
-      
       if (cleanInput === '30l' || cleanInput === '30 lode' || cleanInput === '30 e lode') {
         finalGrade = 31;
       } else {
         const votoNum = parseInt(cleanInput);
         if (isNaN(votoNum) || votoNum < 18 || votoNum > 30) {
-          Alert.alert(
-            "Voto Errato ⚠️",
-            "Un esame superato deve avere un voto numerico tra 18 e 30. Scrivi '30L' per registrare la lode."
-          );
+          Alert.alert('Voto Errato ⚠️', "Un esame superato deve avere un voto numerico tra 18 e 30. Scrivi '30L' per registrare la lode.");
           return;
         }
         finalGrade = votoNum;
       }
     }
 
-    await updateExam(selectedEx.id, {
-      status: eStatus,
-      grade: finalGrade
-    });
-    
+    await updateExam(selectedEx.id, { status: eStatus, grade: finalGrade });
     setResultModal(false); setSelectedEx(null);
   };
 
   const renderPastGrade = (g?: number) => {
     if (!g) return '';
-    return g === 31 ? "30L" : g.toString();
+    return g === 31 ? '30L' : g.toString();
   };
+
+  const examsData = courses.length === 0 ? [] : (examTab === 'upcoming' ? upcomingList : pastList);
 
   return (
     <View style={styles.container}>
-      <View style={styles.tabHeader}>
-        <Text style={styles.title}>Esami & Scadenze 📅</Text>
-        {courses.length > 0 && (
-          <TouchableOpacity style={styles.addButton} onPress={() => setModal(true)}>
-            <Ionicons name="add" size={18} color="#FFF" />
-            <Text style={styles.addButtonText}>Pianifica</Text>
-          </TouchableOpacity>
+      <FlatList
+        data={examsData}
+        keyExtractor={(item) => item.id}
+        contentContainerStyle={styles.scroll}
+        ListHeaderComponent={() => (
+          <>
+            <View style={styles.tabHeader}>
+              <Text style={styles.title}>Esami & Scadenze 📅</Text>
+              {courses.length > 0 && (
+                <TouchableOpacity style={styles.addButton} onPress={() => setModal(true)}>
+                  <Ionicons name="add" size={18} color="#FFF" />
+                  <Text style={styles.addButtonText}>Pianifica</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            <View style={styles.modeTabs}>
+              <TouchableOpacity style={[styles.modeTab, examTab === 'upcoming' && styles.modeTabActive]} onPress={() => setExamTab('upcoming')}>
+                <Text style={[styles.modeText, examTab === 'upcoming' && styles.modeTextActive]}>Da Sostenere ({upcomingList.length})</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modeTab, examTab === 'past' && styles.modeTabActive]} onPress={() => setExamTab('past')}>
+                <Text style={[styles.modeText, examTab === 'past' && styles.modeTextActive]}>Sostenuti ({pastList.length})</Text>
+              </TouchableOpacity>
+            </View>
+
+            {courses.length === 0 && <Text style={styles.emptyText}>Inserisci prima dei corsi nel Tab "Corsi".</Text>}
+          </>
         )}
-      </View>
-
-      <View style={styles.modeTabs}>
-        <TouchableOpacity style={[styles.modeTab, examTab === 'upcoming' && styles.modeTabActive]} onPress={() => setExamTab('upcoming')}>
-          <Text style={[styles.modeText, examTab === 'upcoming' && styles.modeTextActive]}>Da Sostenere ({upcomingList.length})</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.modeTab, examTab === 'past' && styles.modeTabActive]} onPress={() => setExamTab('past')}>
-          <Text style={[styles.modeText, examTab === 'past' && styles.modeTextActive]}>Sostenuti ({pastList.length})</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {courses.length === 0 ? (
-          <Text style={styles.emptyText}>Inserisci prima dei corsi nel Tab "Corsi".</Text>
-        ) : examTab === 'upcoming' ? (
-          upcomingList.length === 0 ? (
-            <Text style={styles.emptyText}>Nessun esame pianificato.</Text>
-          ) : (
-            <FlatList
-              data={upcomingList}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ gap: 12 }}
-              scrollEnabled={false}
-              renderItem={({ item: ex }) => (
-                <View style={styles.card}>
-                  <View style={styles.rowSpace}>
-                    <Text style={styles.courseCardName}>{ex.title}</Text>
-                    <Text style={{ fontSize: 11, color: '#A78BFA', fontWeight: 'bold' }}>{ex.date}</Text>
-                  </View>
-                  <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
-                  <View style={[styles.rowSpace, { marginTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.03)', paddingTop: 8 }]}>
-                    <Text style={{ fontSize: 11, color: '#64748B' }}>Tipo: {ex.type.toUpperCase()}</Text>
-                    <View style={styles.rowAlign}>
-                      <TouchableOpacity style={styles.completeBtn} onPress={() => { setSelectedEx(ex); setResultModal(true); }}>
-                        <Text style={styles.completeBtnText}>Esito</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={{ marginLeft: 12 }} onPress={() => {
-                        Alert.alert("Elimina", "Rimuovere questo esame?", [
-                          { text: "Annulla" },
-                          { text: "Sì", style: "destructive", onPress: async () => await deleteExam(ex.id) }
-                        ]);
-                      }}>
-                        <Ionicons name="trash" size={16} color="#EF4444" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
+        renderItem={({ item: ex }) => (
+          examTab === 'upcoming' ? (
+            <View style={styles.card}>
+              <View style={styles.rowSpace}>
+                <Text style={styles.courseCardName}>{ex.title}</Text>
+                <Text style={{ fontSize: 11, color: '#A78BFA', fontWeight: 'bold' }}>{ex.date}</Text>
+              </View>
+              <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
+              <View style={[styles.rowSpace, { marginTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.03)', paddingTop: 8 }]}>
+                <Text style={{ fontSize: 11, color: '#64748B' }}>Tipo: {ex.type.toUpperCase()}</Text>
+                <View style={styles.rowAlign}>
+                  <TouchableOpacity style={styles.completeBtn} onPress={() => { setSelectedEx(ex); setResultModal(true); }}>
+                    <Text style={styles.completeBtnText}>Esito</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={{ marginLeft: 12 }} onPress={() => {
+                    Alert.alert('Elimina', 'Rimuovere questo esame?', [
+                      { text: 'Annulla' },
+                      { text: 'Sì', style: 'destructive', onPress: async () => await deleteExam(ex.id) }
+                    ]);
+                  }}>
+                    <Ionicons name="trash" size={16} color="#EF4444" />
+                  </TouchableOpacity>
                 </View>
-              )}
-            />
-          )
-        ) : (
-          pastList.length === 0 ? (
-            <Text style={styles.emptyText}>Nessun esame sostenuto ancora registrato.</Text>
+              </View>
+            </View>
           ) : (
-            <FlatList
-              data={pastList}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ gap: 12 }}
-              scrollEnabled={false}
-              renderItem={({ item: ex }) => (
-                <View style={styles.card}>
-                  <View style={styles.rowSpace}>
-                    <Text style={styles.courseCardName}>{ex.title}</Text>
-                    <Text style={[styles.tagText, { color: ex.status === 'passed' ? '#10B981' : '#EF4444', fontWeight: 'bold' }]}>
-                      {ex.status === 'passed' ? `SUPERATO VOTO: ${renderPastGrade(ex.grade)}` : 'NON SUPERATO'}
-                    </Text>
-                  </View>
-                  <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
-                  <Text style={styles.cardSub}>Data sostenimento: {ex.date}</Text>
-                </View>
-              )}
-            />
+            <View style={styles.card}>
+              <View style={styles.rowSpace}>
+                <Text style={styles.courseCardName}>{ex.title}</Text>
+                <Text style={[styles.tagText, { color: ex.status === 'passed' ? '#10B981' : '#EF4444', fontWeight: 'bold' }]}>
+                  {ex.status === 'passed' ? `SUPERATO VOTO: ${renderPastGrade(ex.grade)}` : 'NON SUPERATO'}
+                </Text>
+              </View>
+              <Text style={styles.courseCardProf}>{getCourseName(ex.courseId)}</Text>
+              <Text style={styles.cardSub}>Data sostenimento: {ex.date}</Text>
+            </View>
           )
         )}
-      </ScrollView>
+        ListEmptyComponent={() => (
+          <Text style={styles.emptyText}>{courses.length === 0 ? 'Inserisci prima dei corsi nel Tab "Corsi".' : (examTab === 'upcoming' ? 'Nessun esame pianificato.' : 'Nessun esame sostenuto ancora registrato.')}</Text>
+        )}
+      />
 
       {/* PLAN MODAL CON GESTIONE TASTIERA */}
       <Modal visible={modal} transparent animationType="slide">
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <View style={styles.modal}>
               <View style={styles.rowSpace}>
                 <Text style={styles.modalTitle}>Pianifica Esame 📅</Text>
                 <TouchableOpacity onPress={() => setModal(false)}><Ionicons name="close" size={24} color="#FFF" /></TouchableOpacity>
               </View>
-              <ScrollView style={{ marginVertical: 12 }} keyboardShouldPersistTaps="handled">
-                <Text style={styles.label}>Titolo Scadenza *</Text>
-                <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Es. Appello Scritto" placeholderTextColor="#64748B" />
-                <Text style={styles.label}>Corso Associato</Text>
-                <FlatList
-                  horizontal
-                  data={courses}
-                  keyExtractor={(item) => item.id}
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
-                  renderItem={({ item: c }) => (
-                    <TouchableOpacity style={[styles.chip, courseId === c.id && styles.chipActive]} onPress={() => setCourseId(c.id)}>
-                      <Text style={[styles.chipText, courseId === c.id && styles.chipTextActive]}>{c.name}</Text>
-                    </TouchableOpacity>
-                  )}
-                />
-                <Text style={styles.label}>Data (AAAA-MM-GG)</Text>
-                <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="AAAA-MM-GG" placeholderTextColor="#64748B" />
-              </ScrollView>
+              <FlatList
+                style={{ marginVertical: 12 }}
+                data={[]} // placeholder, keep keyboard handling simple
+                ListFooterComponent={() => (
+                  <>
+                    <Text style={styles.label}>Titolo Scadenza *</Text>
+                    <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Es. Appello Scritto" placeholderTextColor="#64748B" />
+                    <Text style={styles.label}>Corso Associato</Text>
+                    <FlatList
+                      horizontal
+                      data={courses}
+                      keyExtractor={(item) => item.id}
+                      showsHorizontalScrollIndicator={false}
+                      contentContainerStyle={{ gap: 6, paddingVertical: 4 }}
+                      renderItem={({ item: c }) => (
+                        <TouchableOpacity style={[styles.chip, courseId === c.id && styles.chipActive]} onPress={() => setCourseId(c.id)}>
+                          <Text style={[styles.chipText, courseId === c.id && styles.chipTextActive]}>{c.name}</Text>
+                        </TouchableOpacity>
+                      )}
+                    />
+                    <Text style={styles.label}>Data (AAAA-MM-GG)</Text>
+                    <TextInput style={styles.input} value={date} onChangeText={setDate} placeholder="AAAA-MM-GG" placeholderTextColor="#64748B" />
+                  </>
+                )}
+              />
               <View style={[styles.row, { marginTop: 12 }]}>
                 <TouchableOpacity style={styles.cancelBtn} onPress={() => setModal(false)}><Text style={styles.cancelBtnText}>Annulla</Text></TouchableOpacity>
                 <TouchableOpacity style={styles.saveBtn} onPress={handleCreate}><Text style={styles.saveBtnText}>Crea</Text></TouchableOpacity>
@@ -209,7 +194,7 @@ export default function ExamiTab() {
       {/* LOG ESITO MODAL CON GESTIONE TASTIERA */}
       <Modal visible={resultModal} transparent animationType="slide">
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === "ios" ? "padding" : "height"}>
+          <KeyboardAvoidingView style={styles.overlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
             <View style={styles.modal}>
               <Text style={styles.modalTitle}>Registra Esito</Text>
               <Text style={styles.label}>Esito</Text>

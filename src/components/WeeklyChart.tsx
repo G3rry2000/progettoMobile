@@ -7,6 +7,9 @@ interface WeeklyChartProps {
 
 export const WeeklyChart: React.FC<WeeklyChartProps> = ({ weeklyData }) => {
   const maxMins = Math.max(...Object.values(weeklyData), 60);
+  const maxBarHeight = 60; // px
+
+  const dayKeys = Object.keys(weeklyData);
 
   return (
     <View style={styles.card}>
@@ -14,19 +17,25 @@ export const WeeklyChart: React.FC<WeeklyChartProps> = ({ weeklyData }) => {
       <Text style={styles.cardSub}>Minuti accumulati negli ultimi 7 giorni</Text>
       <FlatList
         horizontal
-        data={Object.keys(weeklyData)}
+        data={dayKeys}
         keyExtractor={(item) => item}
         contentContainerStyle={styles.chart}
+        showsHorizontalScrollIndicator={false}
         renderItem={({ item: day }) => {
-          const m = weeklyData[day];
-          const h = Math.min((m / maxMins) * 100, 100);
+          const m = weeklyData[day] || 0;
+          const barH = Math.max((m / (maxMins || 60)) * maxBarHeight, m > 0 ? 8 : 4);
+          const dayNum = (() => {
+            const d = new Date(day);
+            return isNaN(d.getTime()) ? String(day).slice(-2) : String(d.getDate());
+          })();
+
           return (
             <View style={styles.chartCol}>
               <View style={styles.barWrapper}>
                 {m > 0 && <Text style={styles.barVal}>{m}m</Text>}
-                <View style={[styles.bar, { height: `${Math.max(h, 5)}%`, backgroundColor: m > 0 ? '#8B5CF6' : 'rgba(255,255,255,0.05)' }]} />
+                <View style={[styles.bar, { height: barH, backgroundColor: m > 0 ? '#8B5CF6' : 'rgba(255,255,255,0.05)' }]} />
               </View>
-              <Text style={styles.chartLbl}>{day}</Text>
+              <Text style={styles.chartLbl}>{dayNum}</Text>
             </View>
           );
         }}
@@ -46,10 +55,10 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#FFF' },
   cardSub: { fontSize: 11, color: '#64748B', marginBottom: 8 },
-  chart: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 100, paddingTop: 12 },
-  chartCol: { alignItems: 'center', flex: 1 },
-  barWrapper: { height: 60, width: '100%', justifyContent: 'flex-end', alignItems: 'center' },
-  barVal: { fontSize: 9, color: '#A78BFA', fontWeight: 'bold', marginBottom: 2 },
-  bar: { width: 10, borderRadius: 5 },
-  chartLbl: { fontSize: 9, color: '#64748B', marginTop: 6 },
+  chart: { flexDirection: 'row', alignItems: 'flex-end', height: 120, paddingTop: 12, paddingHorizontal: 6 },
+  chartCol: { alignItems: 'center', width: 48, marginHorizontal: 6 },
+  barWrapper: { height: 70, width: '100%', justifyContent: 'flex-end', alignItems: 'center' },
+  barVal: { fontSize: 9, color: '#A78BFA', fontWeight: 'bold', marginBottom: 4 },
+  bar: { width: 14, borderRadius: 8 },
+  chartLbl: { fontSize: 10, color: '#64748B', marginTop: 8 },
 });
