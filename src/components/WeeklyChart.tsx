@@ -24,10 +24,9 @@ export const WeeklyChart: React.FC<WeeklyChartProps> = ({ weeklyData }) => {
         renderItem={({ item: day }) => {
           const m = weeklyData[day] || 0;
           const barH = Math.max((m / (maxMins || 60)) * maxBarHeight, m > 0 ? 8 : 4);
-          const dayNum = (() => {
-            const d = new Date(day);
-            return isNaN(d.getTime()) ? String(day).slice(-2) : String(d.getDate());
-          })();
+          const d = new Date(day);
+          const days = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab'];
+          const label = isNaN(d.getTime()) ? String(day).slice(-2) : days[d.getDay()];
 
           return (
             <View style={styles.chartCol}>
@@ -35,7 +34,7 @@ export const WeeklyChart: React.FC<WeeklyChartProps> = ({ weeklyData }) => {
                 {m > 0 && <Text style={styles.barVal}>{m}m</Text>}
                 <View style={[styles.bar, { height: barH, backgroundColor: m > 0 ? '#8B5CF6' : 'rgba(255,255,255,0.05)' }]} />
               </View>
-              <Text style={styles.chartLbl}>{dayNum}</Text>
+              <Text style={styles.chartLbl}>{label}</Text>
             </View>
           );
         }}
