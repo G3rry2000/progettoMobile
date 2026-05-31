@@ -14,7 +14,6 @@ Progetto realizzato dal **Gruppo 21** per il corso di *Mobile Programming* (Anno
 * [🛠️ Stack Tecnologico](#️-stack-tecnologico)
 * [🏗️ Architettura e Gestione Dati](#️-architettura-e-gestione-dati)
 * [🚀 Installazione e Avvio](#-installazione-e-avvio)
-* [🗺️ Roadmap (Sviluppi Futuri)](#️-roadmap-sviluppi-futuri)
 * [👥 Team di Sviluppo](#-team-di-sviluppo)
 
 ---
@@ -79,3 +78,28 @@ Se usi il terminale Git, lancia il comando:
 ```bash
 git clone [https://github.com/G3rry2000/progettoMobile.git](https://github.com/G3rry2000/progettoMobile.git)
 cd progettoMobile
+```
+
+### 2. Configura ed Esegui
+Una volta all'interno della cartella del progetto tramite terminale, esegui i seguenti comandi per installare i moduli e avviare Expo:
+
+```bash
+# Installa tutte le dipendenze necessarie
+npm install
+
+# Avvia il server di sviluppo di Expo
+npm start
+```
+
+## 👥 Team di Sviluppo
+
+Il progetto è stato sviluppato in modalità Agile tramite controllo versione Git su branch dedicate, dai membri del **Gruppo 21**:
+
+* **Gerardo Carino** — Matricola: 0612710164
+* **Donato Finiello** — Matricola: 0612709377
+* **Mara Mariano** — Matricola: 0612709247
+* **Cataldo Sabato** — Matricola: 0612709472
+* **Daniel Vita** — Matricola: 0612709007
+
+
+
