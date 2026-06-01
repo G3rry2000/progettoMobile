@@ -1,5 +1,3 @@
-Link alla cartella drive con la documentazione richiesta:https://drive.google.com/drive/folders/1Mm6AR_gUpt1b4JWYNnJQnMthlHBknvR-?usp=sharing
-
 # 🚀 StudyPlanner Pro — Study Planner & Exam Tracker
 
 **StudyPlanner Pro** è un'applicazione mobile cross-platform concepita per la gestione della carriera accademica e l'ottimizzazione dei flussi di studio. Sviluppata interamente in **React Native** con **Expo (SDK 54)** e **TypeScript**, l'app centralizza tutti gli strumenti utili a uno studente universitario (calendario, libretto, To-Do list e time-tracking), eliminando la frammentazione dei dati e contrastando la procrastinazione.
